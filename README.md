@@ -62,6 +62,15 @@ added the shipped `PromotionRecord.attestation` field to GAL §5.2, and pinned G
 encoding. The remaining feeder is #180 cross-relay attribution, still declared out of scope in PTC
 §1.3; LF feedback lands in the pass after.
 
+---
+
+**Visual resources (this repo only, not part of the spec snapshot):** [`trust-bricks.md`](trust-bricks.md)
+renders the safe-agents composition model as mermaid diagrams inline on GitHub;
+[`trust-bricks.html`](trust-bricks.html) is the full interactive version (self-contained, open in
+any browser).
+
+---
+
 **The field tables are now mechanically checked against the shipped schemas**
 (`safe_agents/broker/tests/test_spec_contract_drift.py`): a field in a §5 table and not in the
 Pydantic model fails unless its row carries the implementation-status marker, and a field in the
