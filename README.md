@@ -70,18 +70,22 @@ model as mermaid diagrams inline on GitHub; [`trust-bricks.html`](trust-bricks.h
 interactive version (self-contained, open in any browser). [`data-flow.html`](data-flow.html)
 walks a signal across two agents step by step, labeling which of PTC and GAL governs each
 element, with the rung ladder, both lifecycle paths, and the maturity-ceiling join (accurate to
-the 0.2.1-draft section numbers).
+the 0.2.1-draft section numbers). [`standards.html`](standards.html) is the standards landscape:
+everything adopted (connectivity, signing, identity, models, conventions), the two candidates
+declined with a published record, the conceptual ancestry, and the two proposed seams.
 
-Both HTML pages are also published (publicly) on GitHub Pages, for presenting without a clone:
+The HTML pages are also published (publicly) on GitHub Pages, for presenting without a clone:
 
 - Trust bricks: https://wjatx.github.io/trust-bricks/
 - PTC & GAL data flow: https://wjatx.github.io/trust-bricks/data-flow.html
+- Standards landscape: https://wjatx.github.io/trust-bricks/standards.html
 
 **Sync discipline.** Every other location is a deploy target or a pointer, never an editing
 surface: the Pages repo (`wjatx/trust-bricks`) carries byte-identical copies
 (`trust-bricks.html` → `index.html`, `data-flow.html` → `data-flow.html`), and the old claude.ai
-artifacts are stubs pointing at the Pages URLs. To update a diagram: edit it HERE, copy into the
-Pages repo, push both. Never edit a copy in place.
+artifacts are stubs pointing at the Pages URLs. The file mapping is `trust-bricks.html` →
+`index.html`, `data-flow.html` → `data-flow.html`, `standards.html` → `standards.html`. To
+update a diagram: edit it HERE, copy into the Pages repo, push both. Never edit a copy in place.
 
 ---
 

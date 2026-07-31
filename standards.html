@@ -1,0 +1,275 @@
+<!doctype html>
+<!-- Canonical source: github.com/wjatx/ptc-gal-standards (standards.html).
+     Edit there; every other copy (Pages, artifacts) is a deploy target. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The standards landscape: adopted, declined, proposed</title>
+<style>
+  :root{
+    color-scheme:light dark;
+    --ground:#F5F6F9; --surface:#FFFFFF; --band:#ECEEF3;
+    --ink:#151A22; --ink-2:#545C6E; --ink-3:#7C8496;
+    --line:#D6DAE3; --line-strong:#BEC4D0;
+    --ptc:#2E6BB0; --ptc-t:#245488; --ptc-tint:rgba(46,107,176,0.10);
+    --gal:#6A4FB0; --gal-t:#55408F; --gal-tint:rgba(106,79,176,0.11);
+    --sign:#B0771A; --sign-t:#8F5F14; --sign-tint:rgba(176,119,26,0.10);
+    --idn:#2C7D70; --idn-t:#21635A; --idn-tint:rgba(44,125,112,0.11);
+    --wire:#7C8496; --wire-tint:rgba(124,132,150,0.10);
+    --decl:#A8524A; --decl-t:#8A423B; --decl-tint:rgba(168,82,74,0.10);
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Menlo","Consolas",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    --shadow:0 1px 2px rgba(20,26,34,.05),0 8px 24px rgba(20,26,34,.06);
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0B0E13; --surface:#12161D; --band:#161B23;
+    --ink:#E8EBF1; --ink-2:#9BA3B4; --ink-3:#6D7688;
+    --line:#262C37; --line-strong:#39414F;
+    --ptc:#6FA8E6; --ptc-t:#8CBBEE; --ptc-tint:rgba(111,168,230,0.13);
+    --gal:#A78BE8; --gal-t:#B7A2F0; --gal-tint:rgba(167,139,232,0.14);
+    --sign:#E4AC4C; --sign-t:#E9B860; --sign-tint:rgba(228,172,76,0.12);
+    --idn:#54BFAD; --idn-t:#6FCEBD; --idn-tint:rgba(84,191,173,0.13);
+    --wire:#8D96A8; --wire-tint:rgba(141,150,168,0.12);
+    --decl:#D98A81; --decl-t:#E5A29A; --decl-tint:rgba(217,138,129,0.12);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="light"]{
+    --ground:#F5F6F9; --surface:#FFFFFF; --band:#ECEEF3;
+    --ink:#151A22; --ink-2:#545C6E; --ink-3:#7C8496;
+    --line:#D6DAE3; --line-strong:#BEC4D0;
+    --ptc:#2E6BB0; --ptc-t:#245488; --ptc-tint:rgba(46,107,176,0.10);
+    --gal:#6A4FB0; --gal-t:#55408F; --gal-tint:rgba(106,79,176,0.11);
+    --sign:#B0771A; --sign-t:#8F5F14; --sign-tint:rgba(176,119,26,0.10);
+    --idn:#2C7D70; --idn-t:#21635A; --idn-tint:rgba(44,125,112,0.11);
+    --wire:#7C8496; --wire-tint:rgba(124,132,150,0.10);
+    --decl:#A8524A; --decl-t:#8A423B; --decl-tint:rgba(168,82,74,0.10);
+    --shadow:0 1px 2px rgba(20,26,34,.05),0 8px 24px rgba(20,26,34,.06);
+  }
+  :root[data-theme="dark"]{
+    --ground:#0B0E13; --surface:#12161D; --band:#161B23;
+    --ink:#E8EBF1; --ink-2:#9BA3B4; --ink-3:#6D7688;
+    --line:#262C37; --line-strong:#39414F;
+    --ptc:#6FA8E6; --ptc-t:#8CBBEE; --ptc-tint:rgba(111,168,230,0.13);
+    --gal:#A78BE8; --gal-t:#B7A2F0; --gal-tint:rgba(167,139,232,0.14);
+    --sign:#E4AC4C; --sign-t:#E9B860; --sign-tint:rgba(228,172,76,0.12);
+    --idn:#54BFAD; --idn-t:#6FCEBD; --idn-tint:rgba(84,191,173,0.13);
+    --wire:#8D96A8; --wire-tint:rgba(141,150,168,0.12);
+    --decl:#D98A81; --decl-t:#E5A29A; --decl-tint:rgba(217,138,129,0.12);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  .wrap{font-family:var(--sans);background:var(--ground);color:var(--ink);line-height:1.55;
+    -webkit-font-smoothing:antialiased;padding:clamp(20px,4vw,52px) clamp(16px,4vw,40px) 64px;min-height:100vh}
+  .page{max-width:1180px;margin:0 auto}
+  header.top{position:relative}
+  .themebtn{position:absolute;top:0;right:0;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    background:var(--surface);color:var(--ink-3);border:1px solid var(--line-strong);border-radius:999px;padding:6px 12px;cursor:pointer}
+  .themebtn:hover{color:var(--ink);border-color:var(--ptc)}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+  h1{font-size:clamp(24px,3.8vw,34px);line-height:1.1;letter-spacing:-0.02em;font-weight:680;margin:12px 0 0;text-wrap:balance;max-width:28ch}
+  .lede{margin:14px 0 0;color:var(--ink-2);font-size:clamp(14px,1.5vw,16px);max-width:76ch}
+  .lede b{color:var(--ink);font-weight:600}
+
+  h2{font-size:19px;font-weight:660;letter-spacing:-0.01em;margin:40px 0 4px}
+  .h2sub{color:var(--ink-2);font-size:13.5px;margin:0 0 14px;max-width:76ch}
+
+  .pill{font-family:var(--mono);font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:5px;white-space:nowrap;display:inline-block}
+  .p-ptc{color:var(--ptc-t);background:var(--ptc-tint)} .p-gal{color:var(--gal-t);background:var(--gal-tint)}
+  .p-sign{color:var(--sign-t);background:var(--sign-tint)} .p-idn{color:var(--idn-t);background:var(--idn-tint)}
+  .p-wire{color:var(--ink-2);background:var(--wire-tint)} .p-decl{color:var(--decl-t);background:var(--decl-tint)}
+
+  /* proposed hero cards */
+  .heroes{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .hero{border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
+  .hero.ptc{border:1.5px solid var(--ptc);background:var(--ptc-tint)}
+  .hero.gal{border:1.5px solid var(--gal);background:var(--gal-tint)}
+  .hero .nm{font-weight:700;font-size:18px;letter-spacing:-.01em}
+  .hero .role{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+  .hero.ptc .role{color:var(--ptc-t)} .hero.gal .role{color:var(--gal-t)}
+  .hero p{margin:8px 0 0;color:var(--ink-2);font-size:13.5px}
+  .hero p b{color:var(--ink)}
+  .joinbar{margin-top:14px;border:1px dashed var(--line-strong);border-radius:10px;background:var(--surface);
+    padding:12px 16px;font-size:13.5px;color:var(--ink-2)}
+  .joinbar b{color:var(--ink)}
+
+  /* adopted grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:12px}
+  .card{border:1px solid var(--line);border-left-width:3px;border-radius:10px;background:var(--surface);padding:12px 14px}
+  .card .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .card .nm{font-weight:650;font-size:14.5px}
+  .card p{margin:5px 0 0;color:var(--ink-2);font-size:12.5px;line-height:1.5}
+  .card .cite{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-top:7px}
+  .c-wire{border-left-color:var(--wire)} .c-sign{border-left-color:var(--sign)}
+  .c-idn{border-left-color:var(--idn)} .c-ptc{border-left-color:var(--ptc)}
+  .c-decl{border-left-color:var(--decl)} .c-anc{border-left-color:var(--line-strong)}
+
+  footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;
+    color:var(--ink-3);display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between;line-height:1.6}
+  footer .note{max-width:70ch}
+  @media (max-width:700px){.heroes{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="page">
+
+  <header class="top">
+    <button class="themebtn" id="tg" type="button">◐ theme</button>
+    <div class="eyebrow">safe-agents · standards posture</div>
+    <h1>Adopt the standard where one exists; build only the seam</h1>
+    <p class="lede">Everything below the two proposals is an existing standard or model that
+      safe-agents rides, cites normatively, or descends from. The survey left exactly <b>two seams
+      unowned</b>: how trust travels with data, and how autonomy becomes enforceable state. PTC
+      and GAL are the proposals that fill them; nothing else here is ours.</p>
+  </header>
+
+  <h2>Proposed <span class="pill p-ptc">PTC</span> <span class="pill p-gal">GAL</span></h2>
+  <p class="h2sub">Both at 0.2.1-draft, extracted from a reference implementation running live
+    since early July 2026, conformance-tested with clause-level traceability.</p>
+  <div class="heroes">
+    <div class="hero ptc">
+      <div class="nm">PTC · Provenance &amp; Trust Context</div>
+      <div class="role">the trust seam</div>
+      <p>A signed envelope (sender class + append-only provenance chain + taint on the Biba
+        lattice) riding orthogonally to transport, consumed by a <b>deterministic, model-free
+        gate</b> at every boundary. MCP is how agents reach tools; A2A is how agents reach agents;
+        <b>PTC is how trust travels across both.</b></p>
+    </div>
+    <div class="hero gal">
+      <div class="nm">GAL · Grant &amp; Autonomy Lifecycle</div>
+      <div class="role">the authority seam</div>
+      <p>Authority as stored, signed state per (principal, action-class): moved <b>up</b> only by
+        a maker≠checker ceremony licensed by a deterministic evidence predicate, moved <b>down</b>
+        automatically by four deterministic triggers, enforced by the broker per call, every
+        change a signed append-only ledger record.</p>
+    </div>
+  </div>
+  <div class="joinbar"><b>The join:</b> a capability's autonomy rung is capped by what the mesh
+    can currently prove about its inputs. Taint bit → trusted-sender autonomy at most; unsigned
+    lineage → approval-gated; signed, receiver-verified lineage → acting rungs become eligible.
+    PTC supplies the proof, GAL moves the state, and the ceiling is a gate term in the promotion
+    predicate, never reviewer judgment.</div>
+
+  <h2>Adopted: connectivity <span class="pill p-wire">we ride them</span></h2>
+  <p class="h2sub">Transports move calls and data; PTC rides them rather than competing
+    (an MCP <code style="font-family:var(--mono)">_meta</code> field, an A2A extension, or a
+    native channel binding).</p>
+  <div class="grid">
+    <div class="card c-wire"><div class="hd"><span class="nm">MCP</span><span class="pill p-wire">adopted</span></div>
+      <p>Agent-to-tool connectivity. Also governed as attack surface: discovery is untrusted
+        input, tools are callable only via two-key admission over a signed definition set, and a
+        changed description quarantines the tool.</p>
+      <div class="cite">PTC §4 · §6.10 · Tool Host role</div></div>
+    <div class="card c-wire"><div class="hd"><span class="nm">A2A</span><span class="pill p-wire">adopted</span></div>
+      <p>Agent-to-agent connectivity. The trust-context envelope rides as an extension and stays
+        verifiable independently of the wire.</p>
+      <div class="cite">PTC §4 · carriage rule</div></div>
+  </div>
+
+  <h2>Adopted: signing &amp; attestation <span class="pill p-sign">normative shape</span></h2>
+  <div class="grid">
+    <div class="card c-sign"><div class="hd"><span class="nm">DSSE</span><span class="pill p-sign">adopted · normative</span></div>
+      <p>The signature envelope: every chain and ledger signature is over a DSSE
+        pre-authentication encoding.</p>
+      <div class="cite">PTC §6.6 · GAL §6.10</div></div>
+    <div class="card c-sign"><div class="hd"><span class="nm">in-toto</span><span class="pill p-sign">adopted · normative</span></div>
+      <p>Statements use in-toto's registered identifiers (Statement/v1,
+        application/vnd.in-toto+json), adopted rather than minted: a verifier that knows the
+        framework parses PTC without learning a second envelope spelling.</p>
+      <div class="cite">PTC §6.6</div></div>
+    <div class="card c-sign"><div class="hd"><span class="nm">Ed25519</span><span class="pill p-sign">adopted · normative</span></div>
+      <p>The signature algorithm, keyed by the broker's workload identity. The agent cannot
+        sign.</p>
+      <div class="cite">PTC §5.5 · §6.6</div></div>
+    <div class="card c-sign"><div class="hd"><span class="nm">Sigstore / Rekor</span><span class="pill p-sign">optional · ships OFF</span></div>
+      <p>Transparency-log anchoring of high-value chains and high-blast promotions, a deployment
+        knob in both specs.</p>
+      <div class="cite">PTC §6.6 · GAL §6.10</div></div>
+    <div class="card c-sign"><div class="hd"><span class="nm">SD-JWT-VC</span><span class="pill p-sign">reserved</span></div>
+      <p>Selective content disclosure on audit drill-down: reserved as a future extension, not in
+        the current normative set.</p>
+      <div class="cite">PTC §1.3</div></div>
+  </div>
+
+  <h2>Adopted: identity <span class="pill p-idn">key substrate</span></h2>
+  <div class="grid">
+    <div class="card c-idn"><div class="hd"><span class="nm">SPIFFE / WIMSE</span><span class="pill p-idn">recommended substrate</span></div>
+      <p>Workload identity for the broker's signing key, resolved at start-up, never present in
+        the agent image.</p>
+      <div class="cite">PTC §6.6</div></div>
+    <div class="card c-idn"><div class="hd"><span class="nm">DID</span><span class="pill p-idn">fallback</span></div>
+      <p>The key-identity fallback where a SPIFFE/WIMSE substrate is not available.</p>
+      <div class="cite">PTC §6.6</div></div>
+  </div>
+
+  <h2>Adopted: models &amp; conventions</h2>
+  <div class="grid">
+    <div class="card c-ptc"><div class="hd"><span class="nm">Biba integrity lattice</span><span class="pill p-ptc">adopted model</span></div>
+      <p>Low-integrity data may not influence a higher-integrity action without an explicit,
+        audited endorsement. PTC enforces the two-level projection (tainted or not) with the
+        five-level vocabulary normative.</p>
+      <div class="cite">PTC §3.2 · §6.4</div></div>
+    <div class="card c-ptc"><div class="hd"><span class="nm">PEP / PDP separation</span><span class="pill p-ptc">adopted model</span></div>
+      <p>The airlock and broker are enforcement points; the gate is a pure decision point over
+        pre-resolved facts. The model may surface a concern; it never decides.</p>
+      <div class="cite">PTC §6.8</div></div>
+    <div class="card c-anc"><div class="hd"><span class="nm">RFC 2119 / 8174</span><span class="pill p-wire">convention</span></div>
+      <p>Normative keywords in both spec drafts.</p>
+      <div class="cite">PTC §2 · GAL §2</div></div>
+    <div class="card c-anc"><div class="hd"><span class="nm">Canonical JSON · SHA-256 · ISO-8601</span><span class="pill p-wire">convention</span></div>
+      <p>Sorted-key canonical encoding under every signature and integrity basis; SHA-256
+        digests; UTC timestamps throughout.</p>
+      <div class="cite">PTC §6.6 · GAL §3, §6.9</div></div>
+  </div>
+
+  <h2>Evaluated and declined, with a published record <span class="pill p-decl">evidence both ways</span></h2>
+  <p class="h2sub">The adoption posture is evidence-based in both directions: these were serious
+    candidates, run as a differential spike of the 14-rule reference gate over all 73,728
+    reachable inputs.</p>
+  <div class="grid">
+    <div class="card c-decl"><div class="hd"><span class="nm">Cedar</span><span class="pill p-decl">declined</span></div>
+      <p>Cannot checkably express first-match ordering or the value-producing
+        <code style="font-family:var(--mono)">transform</code> verb, which is also why it cannot
+        host the polarity seam.</p>
+      <div class="cite">PTC §1.2 · differential spike</div></div>
+    <div class="card c-decl"><div class="hd"><span class="nm">OPA / Rego</span><span class="pill p-decl">declined</span></div>
+      <p>Reproduces the gate exactly, but forfeits the formal-analyzability motivation while
+        adding an external binary to a path whose property is purity.</p>
+      <div class="cite">PTC §1.2 · differential spike</div></div>
+  </div>
+
+  <h2>Conceptual ancestry <span class="pill p-gal">GAL descends from</span></h2>
+  <div class="grid">
+    <div class="card c-anc"><div class="hd"><span class="nm">Sheridan–Verplanck · SAE J3016</span></div>
+      <p>The levels-of-autonomy vocabulary. Forty years of taxonomy produced labels on systems;
+        GAL turns the label into stored state an enforcement point reads per call.</p></div>
+    <div class="card c-anc"><div class="hd"><span class="nm">FDA PCCP</span></div>
+      <p>A regulator pre-authorizing change inside a declared envelope: the strongest precedent
+        for pre-authorized promotion, but paperwork, with no runtime object and no automatic
+        rollback.</p></div>
+    <div class="card c-anc"><div class="hd"><span class="nm">ODD</span></div>
+      <p>Capability claims bounded by a declared operating domain: the ancestor of the envelope
+        and the covered-distribution evidence rule.</p></div>
+    <div class="card c-anc"><div class="hd"><span class="nm">AP2</span><span class="pill p-wire">closest precedent</span></div>
+      <p>The nearest thing the landscape survey found to a trust-context standard, and it is
+        payments-only. The general seam remains unowned.</p></div>
+  </div>
+
+  <footer>
+    <span class="note">Sources: docs/lf-standards-brief.md, PTC-SPEC.md and GAL-SPEC.md
+      (0.2.1-draft) in this repository. safe-agents is the reference implementation. Names PTC
+      and GAL are final.</span>
+    <span>Compiled 2026-07-30</span>
+  </footer>
+
+</div></div>
+
+<script>
+  var root=document.documentElement, tb=document.getElementById('tg');
+  function cur(){ if(root.dataset.theme) return root.dataset.theme;
+    return matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'; }
+  tb.addEventListener('click',function(){ root.dataset.theme = cur()==='dark'?'light':'dark'; });
+</script>
+</body>
+</html>
