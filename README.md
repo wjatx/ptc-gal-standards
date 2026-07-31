@@ -71,6 +71,11 @@ any browser). [`data-flow.html`](data-flow.html) walks a signal across two agent
 labeling which of PTC and GAL governs each element, with the rung ladder, both lifecycle paths,
 and the maturity-ceiling join (accurate to the 0.2.1-draft section numbers).
 
+Both HTML pages are also published (publicly) on GitHub Pages, for presenting without a clone:
+
+- Trust bricks: https://wjatx.github.io/trust-bricks/
+- PTC & GAL data flow: https://wjatx.github.io/trust-bricks/data-flow.html
+
 ---
 
 **The field tables are now mechanically checked against the shipped schemas**
