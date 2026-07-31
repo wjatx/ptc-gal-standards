@@ -12,6 +12,8 @@
     --amber:#c8863a; --amber-face:rgba(200,134,58,.14); --amber-brd:rgba(200,134,58,.5);
     --teal:#2f9c94; --teal-face:rgba(47,156,148,.14); --teal-brd:rgba(47,156,148,.5);
     --coral:#d9563c; --coral-face:rgba(217,86,60,.13); --coral-brd:rgba(217,86,60,.5);
+    --ptc:#3f74c9; --ptc-face:rgba(63,116,201,.12);
+    --gal:#8a5bd6; --gal-face:rgba(138,91,214,.12);
     --grid:rgba(90,120,150,.09);
   }
   @media (prefers-color-scheme:dark){
@@ -21,6 +23,8 @@
       --amber:#e0a458; --amber-face:rgba(224,164,88,.13); --amber-brd:rgba(224,164,88,.42);
       --teal:#4bbdb2; --teal-face:rgba(75,189,178,.12); --teal-brd:rgba(75,189,178,.4);
       --coral:#e5674d; --coral-face:rgba(229,103,77,.13); --coral-brd:rgba(229,103,77,.42);
+      --ptc:#7aa5e8; --ptc-face:rgba(122,165,232,.14);
+      --gal:#a98ce8; --gal-face:rgba(169,140,232,.14);
       --grid:rgba(120,150,180,.07);
     }
   }
@@ -30,6 +34,8 @@
     --amber:#c8863a; --amber-face:rgba(200,134,58,.14); --amber-brd:rgba(200,134,58,.5);
     --teal:#2f9c94; --teal-face:rgba(47,156,148,.14); --teal-brd:rgba(47,156,148,.5);
     --coral:#d9563c; --coral-face:rgba(217,86,60,.13); --coral-brd:rgba(217,86,60,.5);
+    --ptc:#3f74c9; --ptc-face:rgba(63,116,201,.12);
+    --gal:#8a5bd6; --gal-face:rgba(138,91,214,.12);
     --grid:rgba(90,120,150,.09);
   }
   :root[data-theme="dark"]{
@@ -38,6 +44,8 @@
     --amber:#e0a458; --amber-face:rgba(224,164,88,.13); --amber-brd:rgba(224,164,88,.42);
     --teal:#4bbdb2; --teal-face:rgba(75,189,178,.12); --teal-brd:rgba(75,189,178,.4);
     --coral:#e5674d; --coral-face:rgba(229,103,77,.13); --coral-brd:rgba(229,103,77,.42);
+    --ptc:#7aa5e8; --ptc-face:rgba(122,165,232,.14);
+    --gal:#a98ce8; --gal-face:rgba(169,140,232,.14);
     --grid:rgba(120,150,180,.07);
   }
 
@@ -159,6 +167,30 @@
   @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){.fade{animation:none}}
 
+  /* PTC / GAL badges */
+  .specchips{position:absolute;top:.45rem;right:.55rem;display:flex;gap:.3rem;pointer-events:none}
+  .specchips i{font-family:var(--mono);font-style:normal;font-size:.55rem;letter-spacing:.08em;font-weight:700;
+    padding:.08rem .3rem;border-radius:3px;border:1px solid}
+  .specchips i.ptc,.lchip.ptc{color:var(--ptc);border-color:var(--ptc);background:var(--ptc-face)}
+  .specchips i.gal,.lchip.gal{color:var(--gal);border-color:var(--gal);background:var(--gal-face)}
+  .has-specs .face{padding-right:4.6rem}
+  .contract-cap{position:relative}
+  .contract-cap.has-specs{padding-right:3.2rem}
+  .edge-lane .specchips{position:static;justify-content:center;pointer-events:auto}
+  .lchip{font-family:var(--mono);font-style:normal;font-size:.6rem;letter-spacing:.08em;font-weight:700;
+    padding:.1rem .35rem;border-radius:3px;border:1px solid}
+  .legend2{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem 1.4rem;margin:.7rem 0 0;font-family:var(--mono);font-size:.74rem;color:var(--ink-soft)}
+  .legend2 span{display:inline-flex;align-items:center;gap:.5rem}
+  .spec-toggle{margin-top:.9rem}
+
+  /* spotlight */
+  .hl-ptc :is(.brick,.contract-cap,.edge-lane):not([data-spec~="ptc"]),
+  .hl-gal :is(.brick,.contract-cap,.edge-lane):not([data-spec~="gal"]){opacity:.28}
+  .hl-ptc .brick[data-spec~="ptc"] .face{box-shadow:0 0 0 2px var(--ptc)}
+  .hl-gal .brick[data-spec~="gal"] .face{box-shadow:0 0 0 2px var(--gal)}
+  .hl-ptc .contract-cap[data-spec~="ptc"]{box-shadow:0 0 0 2px var(--ptc)}
+  .hl-gal .contract-cap[data-spec~="gal"]{box-shadow:0 0 0 2px var(--gal)}
+
   footer{margin-top:2.8rem;border-top:2px solid var(--hair-strong);padding-top:1.4rem}
   .thesis{font-size:clamp(1.05rem,2.6vw,1.35rem);font-weight:650;letter-spacing:-.01em;max-width:64ch;line-height:1.4}
   .thesis b{color:var(--coral)}
@@ -189,6 +221,16 @@
       <span><i class="swatch m"></i> Shared mechanism · one implementation</span>
       <span><i class="swatch c"></i> The contract · the studs</span>
     </div>
+    <div class="legend2">
+      <span><i class="lchip ptc">PTC</i> Provenance &amp; Trust Context · the trust seam</span>
+      <span><i class="lchip gal">GAL</i> Grant &amp; Autonomy Lifecycle · the authority seam</span>
+      <span>Badges mark the bricks each proposed standard binds; unbadged bricks ride existing standards and shared mechanism.</span>
+    </div>
+    <div class="toggle spec-toggle" role="group" aria-label="standards highlight">
+      <button id="hl-all" type="button" aria-pressed="true">All</button>
+      <button id="hl-ptc" type="button" aria-pressed="false">PTC</button>
+      <button id="hl-gal" type="button" aria-pressed="false">GAL</button>
+    </div>
   </header>
 
   <!-- PLATE 1 -->
@@ -201,22 +243,22 @@
     <div class="plate-body">
       <div class="stackfig">
         <div class="stack">
-          <div class="contract-cap">
+          <div class="contract-cap" data-spec="ptc">
             <span class="tag">The studs · the contract</span>
             <b>schemas · EventTrigger · trust_map · signed provenance</b>
             <small>Any brick fits any brick that honors these. These are the interface; the transport underneath can vary.</small>
           </div>
 
           <div class="tier-label">Per-agent · un-shareable</div>
-          <div class="brick trust" data-w="3"><div class="face"><span class="tag">identity</span><span class="name">Principal</span><span class="sub">identity = zone · one agent, one principal</span></div></div>
-          <div class="brick trust" data-w="3"><div class="face"><span class="tag">state</span><span class="name">Turn · taint · budget</span><span class="sub">one turn per principal, broker-owned · taint can't be laundered</span></div></div>
-          <div class="brick trust" data-w="3"><div class="face"><span class="tag">boundary</span><span class="name">Trust map · polarity</span><span class="sub">who may reach it, and what admitted content may do</span></div></div>
-          <div class="brick trust" data-w="3"><div class="face"><span class="tag">risk config</span><span class="name">Envelope</span><span class="sub">grants · rungs · caps · reversibility</span></div></div>
-          <div class="brick trust" data-w="3"><div class="face"><span class="tag">record</span><span class="name">Audit chain</span><span class="sub">hash-chained, WORM · un-forkable: two runtimes on one prefix fork it</span></div></div>
+          <div class="brick trust" data-w="3" data-spec="ptc gal"><div class="face"><span class="tag">identity</span><span class="name">Principal</span><span class="sub">identity = zone · one agent, one principal</span></div></div>
+          <div class="brick trust" data-w="3" data-spec="ptc gal"><div class="face"><span class="tag">state</span><span class="name">Turn · taint · budget</span><span class="sub">one turn per principal, broker-owned · taint can't be laundered</span></div></div>
+          <div class="brick trust" data-w="3" data-spec="ptc"><div class="face"><span class="tag">boundary</span><span class="name">Trust map · polarity</span><span class="sub">who may reach it, and what admitted content may do</span></div></div>
+          <div class="brick trust" data-w="3" data-spec="gal"><div class="face"><span class="tag">risk config</span><span class="name">Envelope</span><span class="sub">grants · rungs · caps · reversibility</span></div></div>
+          <div class="brick trust" data-w="3" data-spec="ptc gal"><div class="face"><span class="tag">record</span><span class="name">Audit chain</span><span class="sub">hash-chained, WORM · un-forkable: two runtimes on one prefix fork it</span></div></div>
 
           <div class="tier-label">Shared · one implementation</div>
-          <div class="brick mech" data-w="3"><div class="face"><span class="tag">gate</span><span class="name">Broker</span><span class="sub">deterministic PDP · Doer · same code under every agent</span></div></div>
-          <div class="brick mech" data-w="3"><div class="face"><span class="tag">ingress</span><span class="name">Airlock · drain</span><span class="sub">inbound dispatch + single-principal drain</span></div></div>
+          <div class="brick mech" data-w="3" data-spec="ptc gal"><div class="face"><span class="tag">gate</span><span class="name">Broker</span><span class="sub">deterministic PDP · Doer · same code under every agent</span></div></div>
+          <div class="brick mech" data-w="3" data-spec="ptc"><div class="face"><span class="tag">ingress</span><span class="name">Airlock · drain</span><span class="sub">inbound dispatch + single-principal drain</span></div></div>
           <div class="brick mech" data-w="3"><div class="face"><span class="tag">egress</span><span class="name">Connectors</span><span class="sub">the only thing that touches a real API · broker-held creds</span></div></div>
           <div class="brick mech" data-w="6"><div class="face"><span class="tag">shared infra · zero per-agent cost</span><span class="name">KMS · network · audit &amp; ledger buckets</span><span class="sub">the table every brick rests on</span></div></div>
         </div>
@@ -245,22 +287,22 @@
         <div class="mesh">
           <div><div class="col-h">Producers</div>
             <div class="cell-stack">
-              <div class="brick edge node" data-w="3"><div class="face"><span class="tag">abstain · read-only</span><span class="name">Research</span><span class="sub">market_data.read · news.read · search.query · no trade op at all</span></div></div>
-              <div class="brick edge node neighbor" data-w="3"><div class="face"><span class="tag">mesh neighbor · own spec</span><span class="name">Chief-of-Staff (email)</span><span class="sub">reads email (untrusted) → publishes a confirmation</span></div></div>
+              <div class="brick edge node" data-w="3" data-spec="gal"><div class="face"><span class="tag">abstain · read-only</span><span class="name">Research</span><span class="sub">market_data.read · news.read · search.query · no trade op at all</span></div></div>
+              <div class="brick edge node neighbor" data-w="3" data-spec="ptc"><div class="face"><span class="tag">mesh neighbor · own spec</span><span class="name">Chief-of-Staff (email)</span><span class="sub">reads email (untrusted) → publishes a confirmation</span></div></div>
             </div>
           </div>
 
           <div><div class="col-h">The edge</div>
             <div class="cell-stack">
-              <div class="edge-lane"><span class="arrow">▶</span><span class="lbl"><span class="op">peer.publish</span> · signal<br>broker-stamped provenance</span></div>
-              <div class="edge-lane"><span class="arrow">▶</span><span class="lbl"><span class="op">peer.publish</span> · trade-confirm<br>admission ≠ belief</span></div>
+              <div class="edge-lane" data-spec="ptc"><span class="arrow">▶</span><span class="lbl"><span class="op">peer.publish</span> · signal<br>broker-stamped provenance</span></div>
+              <div class="edge-lane" data-spec="ptc"><span class="arrow">▶</span><span class="lbl"><span class="op">peer.publish</span> · trade-confirm<br>admission ≠ belief</span></div>
             </div>
           </div>
 
           <div><div class="col-h">Consumers</div>
             <div class="cell-stack">
-              <div class="brick trust node" data-w="3"><div class="face"><span class="tag">trade.place · paper</span><span class="name">Paper-Alpaca trader</span><span class="sub">gated · rung sweeps blocked→…→out-of-loop, config-only</span></div></div>
-              <div class="brick trust node" data-w="3"><div class="face"><span class="tag">trade.place · live</span><span class="name">Live-Robinhood trader</span><span class="sub">pinned in-loop until signed provenance verifies ON</span></div></div>
+              <div class="brick trust node" data-w="3" data-spec="gal"><div class="face"><span class="tag">trade.place · paper</span><span class="name">Paper-Alpaca trader</span><span class="sub">gated · rung sweeps blocked→…→out-of-loop, config-only</span></div></div>
+              <div class="brick trust node" data-w="3" data-spec="ptc gal"><div class="face"><span class="tag">trade.place · live</span><span class="name">Live-Robinhood trader</span><span class="sub">pinned in-loop until signed provenance verifies ON</span></div></div>
             </div>
           </div>
         </div>
@@ -286,18 +328,18 @@
       <div class="growfig" id="fig-iso">
         <div class="two-agents">
           <div class="mini-stack">
-            <div class="brick trust" data-w="3"><div class="face"><span class="tag">agent A · trust</span><span class="name">Principal · turn · envelope</span></div></div>
+            <div class="brick trust" data-w="3" data-spec="ptc gal"><div class="face"><span class="tag">agent A · trust</span><span class="name">Principal · turn · envelope</span></div></div>
             <div class="drain-zone">
               <div class="brick mech" data-w="3"><div class="face"><span class="tag">its own</span><span class="name">Drain</span><span class="sub">queue + Lambda · concurrency = 1</span></div></div>
             </div>
-            <div class="brick trust" data-w="3"><div class="face"><span class="tag">its own</span><span class="name">Audit chain A</span><span class="sub">un-forkable prefix</span></div></div>
+            <div class="brick trust" data-w="3" data-spec="ptc gal"><div class="face"><span class="tag">its own</span><span class="name">Audit chain A</span><span class="sub">un-forkable prefix</span></div></div>
           </div>
           <div class="mini-stack">
-            <div class="brick trust" data-w="3"><div class="face"><span class="tag">agent B · trust</span><span class="name">Principal · turn · envelope</span></div></div>
+            <div class="brick trust" data-w="3" data-spec="ptc gal"><div class="face"><span class="tag">agent B · trust</span><span class="name">Principal · turn · envelope</span></div></div>
             <div class="drain-zone">
               <div class="brick mech" data-w="3"><div class="face"><span class="tag">its own</span><span class="name">Drain</span><span class="sub">queue + Lambda · concurrency = 1</span></div></div>
             </div>
-            <div class="brick trust" data-w="3"><div class="face"><span class="tag">its own</span><span class="name">Audit chain B</span><span class="sub">un-forkable prefix</span></div></div>
+            <div class="brick trust" data-w="3" data-spec="ptc gal"><div class="face"><span class="tag">its own</span><span class="name">Audit chain B</span><span class="sub">un-forkable prefix</span></div></div>
           </div>
         </div>
         <p class="caption"><b>Isolated (today).</b> One runtime, one principal, one un-forkable chain per agent: independent blast radius. Cost: N queues + N drains.</p>
@@ -306,8 +348,8 @@
       <!-- MULTIPLEXED -->
       <div class="growfig" id="fig-mux" hidden>
         <div class="two-agents">
-          <div class="brick trust" data-w="3"><div class="face"><span class="tag">agent A · trust</span><span class="name">Principal · turn · envelope</span></div></div>
-          <div class="brick trust" data-w="3"><div class="face"><span class="tag">agent B · trust</span><span class="name">Principal · turn · envelope</span></div></div>
+          <div class="brick trust" data-w="3" data-spec="ptc gal"><div class="face"><span class="tag">agent A · trust</span><span class="name">Principal · turn · envelope</span></div></div>
+          <div class="brick trust" data-w="3" data-spec="ptc gal"><div class="face"><span class="tag">agent B · trust</span><span class="name">Principal · turn · envelope</span></div></div>
         </div>
         <div class="wide-drain" style="margin-top:.7rem">
           <div class="studs2"><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -343,6 +385,29 @@
     var s=document.createElement('div'); s.className='studs'; s.setAttribute('aria-hidden','true');
     for(var i=0;i<n;i++){ s.appendChild(document.createElement('i')); }
     b.insertBefore(s,b.firstChild);
+  });
+
+  // PTC / GAL badges
+  document.querySelectorAll('[data-spec]').forEach(function(el){
+    el.classList.add('has-specs');
+    var w=document.createElement('span'); w.className='specchips'; w.setAttribute('aria-hidden','true');
+    el.getAttribute('data-spec').split(' ').forEach(function(s){
+      var i=document.createElement('i'); i.className=s; i.textContent=s.toUpperCase(); w.appendChild(i);
+    });
+    (el.querySelector('.face')||el).appendChild(w);
+  });
+
+  // standards spotlight
+  var wrapEl=document.querySelector('.wrap');
+  [['hl-all',''],['hl-ptc','ptc'],['hl-gal','gal']].forEach(function(p){
+    var btn=document.getElementById(p[0]); if(!btn) return;
+    btn.addEventListener('click',function(){
+      wrapEl.classList.remove('hl-ptc','hl-gal');
+      if(p[1]) wrapEl.classList.add('hl-'+p[1]);
+      ['hl-all','hl-ptc','hl-gal'].forEach(function(id){
+        document.getElementById(id).setAttribute('aria-pressed',String(id===p[0]));
+      });
+    });
   });
 
   // theme toggle
