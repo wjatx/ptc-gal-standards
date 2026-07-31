@@ -67,7 +67,9 @@ encoding. The remaining feeder is #180 cross-relay attribution, still declared o
 **Visual resources (this repo only, not part of the spec snapshot):** [`trust-bricks.md`](trust-bricks.md)
 renders the safe-agents composition model as mermaid diagrams inline on GitHub;
 [`trust-bricks.html`](trust-bricks.html) is the full interactive version (self-contained, open in
-any browser).
+any browser). [`data-flow.html`](data-flow.html) walks a signal across two agents step by step,
+labeling which of PTC and GAL governs each element, with the rung ladder, both lifecycle paths,
+and the maturity-ceiling join (accurate to the 0.2.1-draft section numbers).
 
 ---
 

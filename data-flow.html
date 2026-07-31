@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PTC &amp; GAL: the data flow</title>
+<style>
+  :root{
+    color-scheme:light dark;
+    --ground:#F5F6F9; --surface:#FFFFFF; --band:#ECEEF3;
+    --ink:#151A22; --ink-2:#545C6E; --ink-3:#7C8496;
+    --line:#D6DAE3; --line-strong:#BEC4D0;
+    --ptc:#2E6BB0; --ptc-t:#245488; --ptc-tint:rgba(46,107,176,0.10);
+    --gal:#6A4FB0; --gal-t:#55408F; --gal-tint:rgba(106,79,176,0.11);
+    --sign:#B0771A; --sign-t:#8F5F14; --sign-tint:rgba(176,119,26,0.10);
+    --idn:#2C7D70; --idn-t:#21635A; --idn-tint:rgba(44,125,112,0.11);
+    --wire:#7C8496; --wire-tint:rgba(124,132,150,0.10);
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Menlo","Consolas",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    --shadow:0 1px 2px rgba(20,26,34,.05),0 8px 24px rgba(20,26,34,.06);
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --ground:#0B0E13; --surface:#12161D; --band:#161B23;
+    --ink:#E8EBF1; --ink-2:#9BA3B4; --ink-3:#6D7688;
+    --line:#262C37; --line-strong:#39414F;
+    --ptc:#6FA8E6; --ptc-t:#8CBBEE; --ptc-tint:rgba(111,168,230,0.13);
+    --gal:#A78BE8; --gal-t:#B7A2F0; --gal-tint:rgba(167,139,232,0.14);
+    --sign:#E4AC4C; --sign-t:#E9B860; --sign-tint:rgba(228,172,76,0.12);
+    --idn:#54BFAD; --idn-t:#6FCEBD; --idn-tint:rgba(84,191,173,0.13);
+    --wire:#8D96A8; --wire-tint:rgba(141,150,168,0.12);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="light"]{
+    --ground:#F5F6F9; --surface:#FFFFFF; --band:#ECEEF3;
+    --ink:#151A22; --ink-2:#545C6E; --ink-3:#7C8496;
+    --line:#D6DAE3; --line-strong:#BEC4D0;
+    --ptc:#2E6BB0; --ptc-t:#245488; --ptc-tint:rgba(46,107,176,0.10);
+    --gal:#6A4FB0; --gal-t:#55408F; --gal-tint:rgba(106,79,176,0.11);
+    --sign:#B0771A; --sign-t:#8F5F14; --sign-tint:rgba(176,119,26,0.10);
+    --idn:#2C7D70; --idn-t:#21635A; --idn-tint:rgba(44,125,112,0.11);
+    --wire:#7C8496; --wire-tint:rgba(124,132,150,0.10);
+    --shadow:0 1px 2px rgba(20,26,34,.05),0 8px 24px rgba(20,26,34,.06);
+  }
+  :root[data-theme="dark"]{
+    --ground:#0B0E13; --surface:#12161D; --band:#161B23;
+    --ink:#E8EBF1; --ink-2:#9BA3B4; --ink-3:#6D7688;
+    --line:#262C37; --line-strong:#39414F;
+    --ptc:#6FA8E6; --ptc-t:#8CBBEE; --ptc-tint:rgba(111,168,230,0.13);
+    --gal:#A78BE8; --gal-t:#B7A2F0; --gal-tint:rgba(167,139,232,0.14);
+    --sign:#E4AC4C; --sign-t:#E9B860; --sign-tint:rgba(228,172,76,0.12);
+    --idn:#54BFAD; --idn-t:#6FCEBD; --idn-tint:rgba(84,191,173,0.13);
+    --wire:#8D96A8; --wire-tint:rgba(141,150,168,0.12);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  .wrap{font-family:var(--sans);background:var(--ground);color:var(--ink);line-height:1.55;
+    -webkit-font-smoothing:antialiased;padding:clamp(20px,4vw,52px) clamp(16px,4vw,40px) 64px;min-height:100vh}
+  .page{max-width:1180px;margin:0 auto}
+  header.top{position:relative}
+  .themebtn{position:absolute;top:0;right:0;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    background:var(--surface);color:var(--ink-3);border:1px solid var(--line-strong);border-radius:999px;padding:6px 12px;cursor:pointer}
+  .themebtn:hover{color:var(--ink);border-color:var(--ptc)}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+  h1{font-size:clamp(24px,3.8vw,34px);line-height:1.1;letter-spacing:-0.02em;font-weight:680;margin:12px 0 0;text-wrap:balance;max-width:30ch}
+  .lede{margin:14px 0 0;color:var(--ink-2);font-size:clamp(14px,1.5vw,16px);max-width:76ch}
+  .lede b{color:var(--ink);font-weight:600}
+  .lede code,td code,.card code{font-family:var(--mono);font-size:.86em;background:var(--band);padding:1px 5px;border-radius:4px;color:var(--ink)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:20px;padding:12px 16px;border:1px solid var(--line);
+    border-radius:10px;background:var(--surface);font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .dot{width:12px;height:12px;border-radius:4px;flex:none}
+  .d-ptc{background:var(--ptc)} .d-gal{background:var(--gal)} .d-sign{background:var(--sign)}
+  .d-idn{background:var(--idn)} .d-wire{background:var(--wire)}
+
+  h2{font-size:20px;font-weight:660;letter-spacing:-0.01em;margin:44px 0 4px}
+  h2 .pill{vertical-align:2px;margin-left:6px}
+  .h2sub{color:var(--ink-2);font-size:13.5px;margin:0 0 16px;max-width:76ch}
+
+  /* flow layout */
+  .flow{display:grid;grid-template-columns:1fr 200px 1fr;gap:14px;align-items:start;
+    border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow);padding:18px}
+  .colh{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
+    font-weight:600;text-align:center;padding-bottom:4px}
+  .col{display:flex;flex-direction:column;gap:10px}
+  .card{border:1.5px solid var(--line-strong);border-radius:9px;background:var(--surface);padding:10px 12px;position:relative}
+  .card.ptc{border-color:var(--ptc);background:var(--ptc-tint)}
+  .card.gal{border-color:var(--gal);background:var(--gal-tint)}
+  .card.sign{border-color:var(--sign);background:var(--sign-tint)}
+  .card.idn{border-color:var(--idn);background:var(--idn-tint)}
+  .card.wire{border-color:var(--wire);background:var(--wire-tint);border-style:dashed}
+  .card.plain{background:var(--band)}
+  .card .t{font-weight:650;font-size:14px}
+  .card .s{color:var(--ink-2);font-size:12.5px;margin-top:2px;line-height:1.45}
+  .step{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--ink);background:var(--band);
+    border:1px solid var(--line-strong);border-radius:5px;padding:1px 6px;margin-right:6px}
+  .down{font-size:15px;color:var(--ink-3);text-align:center;line-height:1;margin:-2px 0}
+  .agentlbl{font-family:var(--mono);font-size:12px;letter-spacing:.1em;font-weight:600;color:var(--ink-3);padding:2px 0 6px}
+
+  .pill{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px;white-space:nowrap;display:inline-block}
+  .p-ptc{color:var(--ptc-t);background:var(--ptc-tint)} .p-gal{color:var(--gal-t);background:var(--gal-tint)}
+  .p-sign{color:var(--sign-t);background:var(--sign-tint)} .p-idn{color:var(--idn-t);background:var(--idn-tint)}
+  .p-wire{color:var(--ink-2);background:var(--wire-tint)}
+
+  /* rung ladder */
+  .ladder{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
+  .rung{border:1.5px solid var(--gal);background:var(--gal-tint);border-radius:9px;padding:10px 12px}
+  .rung.norung{border-style:dashed;border-color:var(--line-strong);background:var(--band)}
+  .rung .t{font-weight:650;font-size:14px}
+  .rung .m{font-family:var(--mono);font-size:11px;color:var(--gal-t);margin-top:2px}
+  .rung.norung .m{color:var(--ink-3)}
+  .rung .s{color:var(--ink-2);font-size:12.5px;margin-top:4px;line-height:1.45}
+  .paths{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  .pathbox{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px}
+  .pathbox h3{margin:0 0 8px;font-size:14.5px;font-weight:650}
+  .pathbox ol,.pathbox ul{margin:0;padding-left:20px;color:var(--ink-2);font-size:13px;display:flex;flex-direction:column;gap:6px}
+  .pathbox li b{color:var(--ink)}
+  .pathbox.up{border-top:3px solid var(--gal)}
+  .pathbox.downp{border-top:3px solid var(--sign)}
+
+  /* tables */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin-top:14px}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px}
+  thead th{text-align:left;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ink-3);font-weight:600;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--band)}
+  tbody td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2)}
+  tbody tr:last-child td{border-bottom:none}
+  td .el{color:var(--ink);font-weight:600}
+
+  /* join band */
+  .join{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:6px}
+  .tier{border:1px solid var(--line-strong);border-radius:9px;background:var(--surface);padding:10px 12px}
+  .tier .m{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ptc-t)}
+  .tier .t{font-weight:650;font-size:13.5px;margin-top:2px}
+  .tier .s{color:var(--ink-2);font-size:12.5px;margin-top:3px;line-height:1.45}
+  .tier.t3{border-color:var(--ptc)}
+  .joinnote{border:1.5px solid var(--gal);background:var(--gal-tint);border-radius:9px;padding:12px 14px;margin-top:12px;
+    font-size:13.5px;color:var(--ink-2)}
+  .joinnote b{color:var(--ink)}
+
+  footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;
+    color:var(--ink-3);display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between;line-height:1.6}
+  footer .note{max-width:70ch}
+
+  @media (max-width:760px){
+    .flow{grid-template-columns:1fr}
+    .flow .colh{text-align:left}
+    .ladder{grid-template-columns:1fr 1fr}
+    .paths{grid-template-columns:1fr}
+    .join{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap"><div class="page">
+
+  <header class="top">
+    <button class="themebtn" id="tg" type="button">◐ theme</button>
+    <div class="eyebrow">PTC · GAL · data flow · matches 0.2.1-draft</div>
+    <h1>Two standards, one flow: trust context moves with the data, authority moves on a ratchet</h1>
+    <p class="lede">A <b>research agent</b> reads an untrusted tool, then publishes a signal to a
+      <b>trading agent</b>. <b>PTC</b> governs what the signal carries and how the receiver decides
+      (provenance, taint, the deterministic gate). <b>GAL</b> governs what the receiving principal is
+      allowed to do at all (its grant, its rung, and how that rung ever changes). Adopted standards do
+      the plumbing: identity, signing, transport.</p>
+    <div class="legend" aria-label="Color key">
+      <span><span class="dot d-ptc"></span>PTC · provenance &amp; trust context (proposed)</span>
+      <span><span class="dot d-gal"></span>GAL · grant &amp; autonomy lifecycle (proposed)</span>
+      <span><span class="dot d-idn"></span>Identity · SPIFFE / WIMSE / DID (adopted)</span>
+      <span><span class="dot d-sign"></span>Signing · DSSE / in-toto (adopted)</span>
+      <span><span class="dot d-wire"></span>Transport · MCP / A2A / channels (adopted)</span>
+    </div>
+  </header>
+
+  <h2>The PTC flow <span class="pill p-ptc">PTC</span></h2>
+  <p class="h2sub">A tainted signal crosses from one agent to another and stays gated the whole way.
+    Numbers follow the envelope.</p>
+
+  <div class="flow">
+    <div>
+      <div class="colh">Agent A · research</div>
+      <div class="col">
+        <div class="card plain"><span class="t">Model proposes a tool read</span>
+          <span class="s">holds no credentials; its only egress is the broker</span></div>
+        <div class="down">▼</div>
+        <div class="card ptc"><span class="t"><span class="step">1</span>Broker gates the read</span>
+          <span class="s">pure deterministic decision, five-verb alphabet: allow · deny · transform ·
+          require_approval · abstain. Transport to the tool is <span class="pill p-wire">MCP</span>,
+          admitted two-key (image-baked declaration + registry activation at a matching hash)</span></div>
+        <div class="down">▼</div>
+        <div class="card ptc"><span class="t"><span class="step">2</span>The response taints the turn</span>
+          <span class="s">source <code>connector:{tool}.{op}</code> enters the broker-owned turn;
+          source-based, path-recorded, non-strippable. No agent API can clear it</span></div>
+        <div class="down">▼</div>
+        <div class="card ptc"><span class="t"><span class="step">3</span>Agent asks to publish; broker builds the envelope</span>
+          <span class="s">agent authors only <code>event_id</code>, <code>principal</code>,
+          <code>payload</code>. The broker stamps sender, provenance and expiry from the turn's real
+          taint state: lineage, not a collapsed bit. A publish is an external write, so on a tainted
+          turn it escalates through the polarity seam first</span></div>
+        <div class="down">▼</div>
+        <div class="card sign"><span class="t"><span class="step">4</span>Broker signs the chain</span>
+          <span class="s">Ed25519 over a <span class="pill p-sign">DSSE</span> pre-authentication
+          encoding of an <span class="pill p-sign">in-toto</span> statement binding payload hash,
+          hops, signer and the anti-replay identity. The key is the broker's workload identity:
+          <b>the agent cannot sign</b></span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="colh">The wire</div>
+      <div class="col">
+        <div class="card wire"><span class="t"><span class="step">5</span>Envelope in transit</span>
+          <span class="s">sender identity · payload · append-only provenance chain · per-hop
+          signatures. <code>sender_class</code> is <b>absent on the wire</b>; only the receiver sets
+          it. Carriage is transport-orthogonal: <span class="pill p-wire">MCP _meta</span>
+          <span class="pill p-wire">A2A ext</span> <span class="pill p-wire">channels</span></span></div>
+        <div class="card idn"><span class="t">Who signed, who sent</span>
+          <span class="s"><span class="pill p-idn">SPIFFE / WIMSE</span> workload identity keys the
+          signature; the transport credential authenticates the hop. Neither is held by an agent</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="colh">Agent B · trading</div>
+      <div class="col">
+        <div class="card ptc"><span class="t"><span class="step">6</span>Airlock re-validates and stamps</span>
+          <span class="s">schema check → signature verification (fail-closed when ON) → trust-map
+          exact match (unmapped = drop, recorded) → dedupe → optional content screen, the one
+          model-judged gate: refuse or pass, never bless. Then exactly one receiver hop is appended
+          and <code>sender_class</code> set</span></div>
+        <div class="down">▼</div>
+        <div class="card ptc"><span class="t"><span class="step">7</span>Taint re-derived into B's turn</span>
+          <span class="s">any <code>untrusted</code> hop taints, under <b>B's own trust map</b>, never
+          A's assertion. Authenticity never cleans: a verified peer hop over an untrusted origin
+          stays tainted</span></div>
+        <div class="down">▼</div>
+        <div class="card ptc"><span class="t"><span class="step">8</span>Gate decides <code>trade.place</code></span>
+          <span class="s">tainted turn + external write escalates through the polarity seam:
+          <code>require_approval</code> where a human is reachable, <code>deny</code> where none is.
+          Grant-independent, no rung routes around it (PTC-27)</span></div>
+        <div class="down">▼</div>
+        <div class="card ptc"><span class="t"><span class="step">9</span>Human approves; broker executes</span>
+          <span class="s">the owner channel is itself a PTC envelope (<code>sender_class=owner</code>).
+          Identical pending approvals coalesce; the queue never sheds</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+   <table>
+    <thead><tr><th style="width:44px">#</th><th style="width:32%">Element</th><th>Governed by</th></tr></thead>
+    <tbody>
+     <tr><td>1</td><td><span class="el">Every brokered call</span></td><td><span class="pill p-ptc">PTC §6.8</span> the deterministic gate: pure decision function, model may surface, never decide. Tool admission per <span class="pill p-ptc">PTC §6.10</span>; transport is <span class="pill p-wire">MCP</span></td></tr>
+     <tr><td>2</td><td><span class="el">Taint on the turn</span></td><td><span class="pill p-ptc">PTC §5.4, §6.3</span> derived, non-strippable, broker-owned turn identity; Biba lattice, two-level projection</td></tr>
+     <tr><td>3</td><td><span class="el">Outbound envelope</span></td><td><span class="pill p-ptc">PTC §6.5</span> broker-stamped provenance from the sending turn, never agent-authored; lineage carries true origins</td></tr>
+     <tr><td>4</td><td><span class="el">Chain signature</span></td><td><span class="pill p-sign">DSSE / in-toto</span> shape per <span class="pill p-ptc">PTC §6.6</span>; broker workload key via <span class="pill p-idn">SPIFFE / WIMSE / DID</span></td></tr>
+     <tr><td>5</td><td><span class="el">The carriage</span></td><td><span class="pill p-ptc">PTC §4</span> rides orthogonally to transport, verifiable independently of it</td></tr>
+     <tr><td>6</td><td><span class="el">Receiver pipeline</span></td><td><span class="pill p-ptc">PTC §6.1, §6.7, §6.9</span> ingestion stamping, fail-closed verification, screen refuse-or-pass</td></tr>
+     <tr><td>7</td><td><span class="el">One-way rule</span></td><td><span class="pill p-ptc">PTC §6.2</span> no gate output lowers derived taint; sender labels are a floor, never a grant</td></tr>
+     <tr><td>8</td><td><span class="el">No-write-up floor</span></td><td><span class="pill p-ptc">PTC §6.4</span> tainted external write escalates, grant-independently; endorsement is reviewed config, never runtime</td></tr>
+     <tr><td>9</td><td><span class="el">What B may do at all</span></td><td><span class="pill p-gal">GAL</span> the grant for <code>(principal, trade.place)</code>: its rung decides whether a human is in, on, or out of the loop. Next section</td></tr>
+    </tbody>
+   </table>
+  </div>
+
+  <h2>The GAL lifecycle <span class="pill p-gal">GAL</span></h2>
+  <p class="h2sub">Authority is stored state per <code>(principal, action-class)</code>, moved on a
+    ratchet: promotion is recorded and human-gated, demotion is automatic and deterministic, with no
+    model anywhere on either path.</p>
+
+  <div class="ladder">
+    <div class="rung norung"><span class="t">Recommend</span><span class="m">no grant exists</span>
+      <span class="s">broker default-denies; advice is only text; no staged intent ever exists</span></div>
+    <div class="rung"><span class="t">in-loop</span><span class="m">level: "in-loop"</span>
+      <span class="s">agent stages a real call; a human releases each act; the broker executes</span></div>
+    <div class="rung"><span class="t">on-loop</span><span class="m">level: "on-loop"</span>
+      <span class="s">broker executes within the envelope; the human supervises the audit surface</span></div>
+    <div class="rung"><span class="t">out-of-loop</span><span class="m">level: "out-of-loop"</span>
+      <span class="s">broker executes fully within the envelope; the human sets the envelope</span></div>
+  </div>
+
+  <div class="paths">
+    <div class="pathbox up">
+      <h3>Up: the promotion ceremony <span class="pill p-gal">GAL §6.4</span></h3>
+      <ol>
+        <li><b>Maker proposes</b> a level raise, binding the evidence window into the proposal
+          (single-use, expiring).</li>
+        <li><b>The licensing predicate runs</b>: pure and deterministic over durable counters plus the
+          typed evidence artifact. Maturity ceiling, evidence present and fresh, coverage asserted,
+          budget not in breach, minimum observations, error rate under threshold. Every ambiguous
+          case resolves to ineligible.</li>
+        <li><b>Checker ratifies</b>: a different credential than the maker, compared on credential
+          identity, so no single credential can self-promote. High-blast classes are <b>always</b>
+          human-ratified per instance; detection never substitutes.</li>
+        <li><b>Signed record before grant write</b>: a <code>promotion</code> ledger record
+          (<span class="pill p-sign">DSSE</span>-signed) lands first; every partial failure falls
+          toward less authority.</li>
+        <li><b>The grant moves one rung.</b> A promotion is not complete until the promoted grant has
+          acted once.</li>
+      </ol>
+    </div>
+    <div class="pathbox downp">
+      <h3>Down: automatic, no ceremony <span class="pill p-gal">GAL §6.7</span></h3>
+      <ul>
+        <li><b>Four deterministic triggers</b>, each from typed durable inputs:
+          <code>stale_confidence</code> · <code>corroboration_failure</code> ·
+          <code>budget_breach</code> · <code>false_action</code> (one authenticated owner flag
+          suffices). A tripped trigger drops the grant to <code>lastSafeLevel</code>, never below
+          scrutiny, never to <code>out-of-loop</code>.</li>
+        <li><b>Lapse</b>: a certification term (<code>certifiedUntil</code>) expires into
+          <code>lastSafeLevel</code> with reason <code>pending-evidence</code>. Normative, marked
+          not yet implemented in the reference implementation.</li>
+        <li><b>Tightening</b>: any level to <code>in-loop</code>, always permitted, recorded, no
+          ceremony. One flag can demote; no flags can promote.</li>
+        <li><b>Separate identity</b>: demotion writes run under their own identity, and the agent has
+          no write access of any kind to the grant store. A reachable write is a promotion bypass.</li>
+        <li><b>Re-promotion</b> needs fresh evidence, different thresholds and a dwell time;
+          <code>labelLatency</code> caps how fast a class can climb back.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+   <table>
+    <thead><tr><th style="width:32%">Ledger record</th><th>What it proves</th></tr></thead>
+    <tbody>
+     <tr><td><span class="el">promotion</span></td><td>who proposed, who ratified (maker ≠ checker on credential identity), over which evidence window, under which <code>envelopeHash</code></td></tr>
+     <tr><td><span class="el">demotion</span></td><td>which deterministic trigger fired and which reason applies: <code>failing</code> (fix it) vs <code>pending-evidence</code> (gather data), kept distinct end to end</td></tr>
+     <tr><td><span class="el">bootstrap</span></td><td>the sanctioned seed: every grant has a ledger counterpart from birth, so the audit's no-orphan invariant holds with no exemption</td></tr>
+     <tr><td><span class="el">tightening</span></td><td>a voluntary drop to <code>in-loop</code>, accounted for without ceremony</td></tr>
+     <tr><td><span class="el">lapse</span></td><td>a term expired with nothing proven broken; recorded as an absence, never as a fired trigger <em>(not yet implemented in the reference implementation)</em></td></tr>
+    </tbody>
+   </table>
+  </div>
+
+  <h2>Where they join</h2>
+  <p class="h2sub">PTC proves the premise; GAL moves the state. A capability's rung may never exceed
+    what the mesh can currently prove, and the ceiling is a deterministic gate term in the promotion
+    predicate, never a reviewer's judgment.</p>
+
+  <div class="join">
+    <div class="tier"><span class="m">TIER 1 · taint-bit</span><span class="t">A taint flag propagates</span>
+      <span class="s">correct gating only if you trust the sender: low-blast, simulated effects</span></div>
+    <div class="tier"><span class="m">TIER 2 · lineage</span><span class="t">Full chain, receiver derives taint</span>
+      <span class="s">a human sees the true origin: real action with human approval</span></div>
+    <div class="tier t3"><span class="m">TIER 3 · signed-lineage</span><span class="t">Signed chain, verification ON</span>
+      <span class="s">the receiver cannot be lied to: acting rungs become eligible</span></div>
+  </div>
+
+  <div class="joinnote"><b>Both acting rungs (on-loop and out-of-loop) require signed-lineage</b>
+    (GAL §6.13; PTC §7). And the ceiling is not the only bound: signing proves premise, not response
+    time, so a high-blast promotion is always human-ratified regardless of tier (GAL §6.4.4).
+    In-loop carries no provenance ceiling; it is the approval-gated floor.</div>
+
+  <footer>
+    <span class="note">Section references are to PTC-SPEC.md and GAL-SPEC.md (0.2.1-draft, in this
+      repository). safe-agents is the reference implementation; identity, signing and transport
+      primitives are adopted standards. Names PTC and GAL are final.</span>
+    <span>Compiled 2026-07-30</span>
+  </footer>
+
+</div></div>
+
+<script>
+  var root=document.documentElement, tb=document.getElementById('tg');
+  function cur(){ if(root.dataset.theme) return root.dataset.theme;
+    return matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'; }
+  tb.addEventListener('click',function(){ root.dataset.theme = cur()==='dark'?'light':'dark'; });
+</script>
+</body>
+</html>
