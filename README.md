@@ -64,17 +64,24 @@ encoding. The remaining feeder is #180 cross-relay attribution, still declared o
 
 ---
 
-**Visual resources (this repo only, not part of the spec snapshot):** [`trust-bricks.md`](trust-bricks.md)
-renders the safe-agents composition model as mermaid diagrams inline on GitHub;
-[`trust-bricks.html`](trust-bricks.html) is the full interactive version (self-contained, open in
-any browser). [`data-flow.html`](data-flow.html) walks a signal across two agents step by step,
-labeling which of PTC and GAL governs each element, with the rung ladder, both lifecycle paths,
-and the maturity-ceiling join (accurate to the 0.2.1-draft section numbers).
+**Visual resources — THIS REPO IS THE CANONICAL HOME of the diagram pages** (they are not part
+of the spec snapshot): [`trust-bricks.md`](trust-bricks.md) renders the safe-agents composition
+model as mermaid diagrams inline on GitHub; [`trust-bricks.html`](trust-bricks.html) is the full
+interactive version (self-contained, open in any browser). [`data-flow.html`](data-flow.html)
+walks a signal across two agents step by step, labeling which of PTC and GAL governs each
+element, with the rung ladder, both lifecycle paths, and the maturity-ceiling join (accurate to
+the 0.2.1-draft section numbers).
 
 Both HTML pages are also published (publicly) on GitHub Pages, for presenting without a clone:
 
 - Trust bricks: https://wjatx.github.io/trust-bricks/
 - PTC & GAL data flow: https://wjatx.github.io/trust-bricks/data-flow.html
+
+**Sync discipline.** Every other location is a deploy target or a pointer, never an editing
+surface: the Pages repo (`wjatx/trust-bricks`) carries byte-identical copies
+(`trust-bricks.html` → `index.html`, `data-flow.html` → `data-flow.html`), and the old claude.ai
+artifacts are stubs pointing at the Pages URLs. To update a diagram: edit it HERE, copy into the
+Pages repo, push both. Never edit a copy in place.
 
 ---
 
