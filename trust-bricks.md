@@ -13,7 +13,7 @@ Mapping to the specs: the studs (signed provenance, trust-map admission, the sch
 are the **PTC** seam; the amber authority state (envelope, grants, rungs, and their lifecycle)
 is what **GAL** governs.
 
-## Plate 01 — one agent is an atomic stack
+## Plate 01: one agent is an atomic stack
 
 ```mermaid
 flowchart TB
@@ -50,7 +50,7 @@ flowchart TB
   class TRUST,MECH tier
 ```
 
-## Plate 02 — a mesh is bricks snapping stud-to-stud
+## Plate 02: a mesh is bricks snapping stud-to-stud
 
 One agent's emitter is another's receiver: a brokered `peer.publish` lands at the receiver's
 airlock as `sender-class=peer-agent`. Same studs, so they just fit. The worked example is the
@@ -82,7 +82,7 @@ flowchart LR
 The two traders run one program; only provider and rung change. A signal is *data*: the trader
 re-decides under its own polarity, so an approved peer is never a believed peer.
 
-## Plate 03 — grow by widening mechanism, never the boundary
+## Plate 03: grow by widening mechanism, never the boundary
 
 Isolation is the default: identical stacks, one drain and one chain per agent, independent
 blast radius. To spend fewer resources you widen a *mechanism* brick under the trust cells.

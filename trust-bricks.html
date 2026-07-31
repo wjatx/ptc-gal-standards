@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Trust Bricks — the safe-agents composition model</title>
+<title>Trust Bricks: the safe-agents composition model</title>
 <style>
   :root{
     color-scheme:light dark;
@@ -183,11 +183,11 @@
     <button class="themebtn" id="tg" type="button">◐ theme</button>
     <div class="eyebrow">safe-agents · composition model</div>
     <h1>Trust bricks: agents that <em>snap together</em></h1>
-    <p class="lede">An agent is one studded brick-stack. What makes it safe stays per-agent and un-shareable; the machinery underneath is shared code. You compose a mesh the way you build with Lego — the studs are a contract, so any emitter fits any receiver that honors it.</p>
+    <p class="lede">An agent is one studded brick-stack. What makes it safe stays per-agent and un-shareable; the machinery underneath is shared code. You compose a mesh the way you build with Lego: the studs are a contract, so any emitter fits any receiver that honors it.</p>
     <div class="legend">
-      <span><i class="swatch t"></i> Per-agent trust cell — never shared</span>
-      <span><i class="swatch m"></i> Shared mechanism — one implementation</span>
-      <span><i class="swatch c"></i> The contract — the studs</span>
+      <span><i class="swatch t"></i> Per-agent trust cell · never shared</span>
+      <span><i class="swatch m"></i> Shared mechanism · one implementation</span>
+      <span><i class="swatch c"></i> The contract · the studs</span>
     </div>
   </header>
 
@@ -204,7 +204,7 @@
           <div class="contract-cap">
             <span class="tag">The studs · the contract</span>
             <b>schemas · EventTrigger · trust_map · signed provenance</b>
-            <small>Any brick fits any brick that honors these. Not the transport — the interface.</small>
+            <small>Any brick fits any brick that honors these. These are the interface; the transport underneath can vary.</small>
           </div>
 
           <div class="tier-label">Per-agent · un-shareable</div>
@@ -212,7 +212,7 @@
           <div class="brick trust" data-w="3"><div class="face"><span class="tag">state</span><span class="name">Turn · taint · budget</span><span class="sub">one turn per principal, broker-owned · taint can't be laundered</span></div></div>
           <div class="brick trust" data-w="3"><div class="face"><span class="tag">boundary</span><span class="name">Trust map · polarity</span><span class="sub">who may reach it, and what admitted content may do</span></div></div>
           <div class="brick trust" data-w="3"><div class="face"><span class="tag">risk config</span><span class="name">Envelope</span><span class="sub">grants · rungs · caps · reversibility</span></div></div>
-          <div class="brick trust" data-w="3"><div class="face"><span class="tag">record</span><span class="name">Audit chain</span><span class="sub">hash-chained, WORM · un-forkable — two runtimes on one prefix fork it</span></div></div>
+          <div class="brick trust" data-w="3"><div class="face"><span class="tag">record</span><span class="name">Audit chain</span><span class="sub">hash-chained, WORM · un-forkable: two runtimes on one prefix fork it</span></div></div>
 
           <div class="tier-label">Shared · one implementation</div>
           <div class="brick mech" data-w="3"><div class="face"><span class="tag">gate</span><span class="name">Broker</span><span class="sub">deterministic PDP · Doer · same code under every agent</span></div></div>
@@ -225,8 +225,8 @@
           <h3>Read it top-down</h3>
           <ul>
             <li><b>Studs = the contract.</b> Schemas + the EventTrigger envelope + trust-map admission. This is why bricks compose at all.</li>
-            <li class="t"><b style="color:var(--amber)">Amber = the trust boundary.</b> Principal, turn/taint/budget, trust-map, envelope, audit chain. A fully compromised agent can still only <em>ask</em> — because these are its alone.</li>
-            <li class="m"><b style="color:var(--teal)">Teal = shared mechanism.</b> The broker, airlock, drain, connectors — one codebase, not copied per agent. Fifty agents is not fifty platforms.</li>
+            <li class="t"><b style="color:var(--amber)">Amber = the trust boundary.</b> Principal, turn/taint/budget, trust-map, envelope, audit chain. A fully compromised agent can still only <em>ask</em>, because these are its alone.</li>
+            <li class="m"><b style="color:var(--teal)">Teal = shared mechanism.</b> The broker, airlock, drain, connectors: one codebase, not copied per agent. Fifty agents is not fifty platforms.</li>
           </ul>
         </div>
       </div>
@@ -265,7 +265,7 @@
           </div>
         </div>
       </div>
-      <p class="note"><b>Same code, config differs.</b> The two traders run one program; only provider and rung change. A signal is <em>data</em> — the trader re-decides under its own polarity, so "approved peer" never means "believed peer." And a brick can even live on a different cloud: the studs are the wire contract, not the transport — as long as it's a real safe-agents broker enforcing provenance.</p>
+      <p class="note"><b>Same code, config differs.</b> The two traders run one program; only provider and rung change. A signal is <em>data</em>: the trader re-decides under its own polarity, so "approved peer" never means "believed peer." And a brick can even live on a different cloud: the studs are the wire contract, not the transport, as long as it's a real safe-agents broker enforcing provenance.</p>
     </div>
   </section>
 
@@ -273,8 +273,8 @@
   <section class="plate">
     <div class="plate-hd">
       <span class="plate-no">PLATE 03</span>
-      <h2>Grow by widening mechanism — never the boundary</h2>
-      <p>Two agents, full isolation by default: identical stacks. To spend fewer resources you widen a <em>mechanism</em> brick under the trust cells — but a shared brick still keeps each principal's chain separate inside it.</p>
+      <h2>Grow by widening mechanism, never the boundary</h2>
+      <p>Two agents, full isolation by default: identical stacks. To spend fewer resources you widen a <em>mechanism</em> brick under the trust cells, but a shared brick still keeps each principal's chain separate inside it.</p>
     </div>
     <div class="plate-body">
       <div class="toggle" role="group" aria-label="topology">
@@ -300,7 +300,7 @@
             <div class="brick trust" data-w="3"><div class="face"><span class="tag">its own</span><span class="name">Audit chain B</span><span class="sub">un-forkable prefix</span></div></div>
           </div>
         </div>
-        <p class="caption"><b>Isolated (today).</b> One runtime, one principal, one un-forkable chain per agent — independent blast radius. Cost: N queues + N drains.</p>
+        <p class="caption"><b>Isolated (today).</b> One runtime, one principal, one un-forkable chain per agent: independent blast radius. Cost: N queues + N drains.</p>
       </div>
 
       <!-- MULTIPLEXED -->
@@ -318,19 +318,19 @@
             <div class="chain-cell"><span class="tag">still separate</span><b>Audit chain B</b></div>
           </div>
         </div>
-        <p class="caption"><b>Multiplexed (a deployment dial).</b> One drain serves many principals — far fewer resources. The trust cells above stay separate, and the shared brick still holds each chain apart <em>inside</em> it: now an in-process discipline instead of an AWS boundary. You widened the mechanism, not the boundary.</p>
+        <p class="caption"><b>Multiplexed (a deployment dial).</b> One drain serves many principals with far fewer resources. The trust cells above stay separate, and the shared brick still holds each chain apart <em>inside</em> it: now an in-process discipline instead of an AWS boundary. You widened the mechanism, not the boundary.</p>
       </div>
 
-      <p class="note"><b>The rule.</b> Some bricks can never widen — principal, turn/taint, trust-map, audit chain. Everything you gain by multiplexing, you gain under those cells, never through them. Isolated-vs-multiplexed is a per-deployment risk call, not part of the agent contract.</p>
+      <p class="note"><b>The rule.</b> Some bricks can never widen: principal, turn/taint, trust-map, audit chain. Everything you gain by multiplexing, you gain under those cells, never through them. Isolated-vs-multiplexed is a per-deployment risk call, not part of the agent contract.</p>
     </div>
   </section>
 
   <footer>
-    <p class="thesis">The trust boundary is <b>per-agent and never shared</b>. The mechanism behind it is shared code + shared infra + a small per-agent resource set — and how much of that set is truly per-agent versus multiplexed is a <b>deployment dial</b>, not part of the agent contract.</p>
+    <p class="thesis">The trust boundary is <b>per-agent and never shared</b>. The mechanism behind it is shared code + shared infra + a small per-agent resource set; how much of that set is truly per-agent versus multiplexed is a <b>deployment dial</b>, not part of the agent contract.</p>
     <div class="refs">
-      <span>safe-agents · <code>docs/scaling-and-mesh.md</code> — the isolated-vs-multiplexed topology</span>
-      <span>safe-agents · <code>docs/canonical-consumer.md</code> — the five-seam consumer anatomy</span>
-      <span>trading-agent · <code>docs/agent-set.md</code> — the worked mesh above</span>
+      <span>safe-agents · <code>docs/scaling-and-mesh.md</code> · the isolated-vs-multiplexed topology</span>
+      <span>safe-agents · <code>docs/canonical-consumer.md</code> · the five-seam consumer anatomy</span>
+      <span>trading-agent · <code>docs/agent-set.md</code> · the worked mesh above</span>
     </div>
   </footer>
 
