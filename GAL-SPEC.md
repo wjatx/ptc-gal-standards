@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| **Version** | `0.2.1-draft` |
+| **Version** | `0.2.2-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
-| **Date** | 2026-07-29 |
+| **Date** | 2026-08-03 |
 | **IPR** | This document is shared **for discussion only**. No license or other right to any intellectual property is granted, expressly or by implication, by its distribution or by any discussion of it. |
 | **Sibling specification** | `PTC-SPEC.md` — *PTC: Provenance & Trust Context, Specification* (drafted in parallel). This document cross-references PTC by name and section topic, never by section number. |
 
@@ -856,14 +856,37 @@ by a third party holding read-only access.
 
 ### 8.1 Evidence poisoning
 
-Promotion evidence is accumulated from live behavior — behavior an injected input can shape.
-Excluding tainted-turn outcomes starves evidence (an availability lever: poison inputs to
-freeze a capability at a low rung); including them lets a patient adversary groom a promotion.
-The likely direction is taint-aware evidence windows with weighting as deployment policy, but
-this is information-flow-hard — the same class of problem as declassification — and this
-specification deliberately does not specify it (§1.3). Deployments SHOULD treat evidence windows overlapping
-known-tainted activity with suspicion at ratification; the covered-distribution assertion
-(§6.4.2) is the accountability anchor for exactly this judgment.
+Promotion evidence is accumulated from live behavior, and that behavior can be shaped. Two cases
+behave differently and must not be conflated, because a mitigation for the first does nothing
+about the second.
+
+**Tainted grooming.** An injected input shapes behavior and the turn carries taint. Excluding
+tainted-turn outcomes starves evidence (an availability lever: poison inputs to freeze a
+capability at a low rung); including them lets an adversary who can taint a turn shape what the
+window records. The likely direction is taint-aware evidence windows with weighting as deployment
+policy, but this is information-flow-hard (the same class of problem as declassification) and
+this specification deliberately does not specify it (§1.3). Deployments SHOULD treat evidence
+windows overlapping known-tainted activity with suspicion at ratification; the covered-distribution
+assertion (§6.4.2) is the accountability anchor for exactly this judgment.
+
+**Untainted grooming.** A patient adversary, or ordinary drift with no adversary at all, can
+produce a *clean* behavioral record that the predicate rewards. No turn is tainted, so there is
+nothing for a taint-aware window to weight and the SHOULD above does not fire. Deployments MUST
+NOT treat the absence of taint in an evidence window as evidence that the window was not groomed.
+
+The structural reason is worth stating plainly, because it bounds what any evidence predicate can
+be trusted to do. Taint is a ratchet: it accumulates, the subject cannot lower it, and it therefore
+cannot be farmed. An evidence window that licenses promotion on accumulated clean behavior is the
+opposite shape, a credit mechanism whose state the subject improves through its own conduct. Any
+control whose state the subject can improve is farmable by a subject patient enough to improve it
+honestly first.
+
+This specification does not resolve untainted grooming, and no weighting scheme closes it, because
+there is no signal to weight. What bounds it is the ceremony rather than the predicate: promotion
+requires maker≠checker ratification (§6.4) that the accumulating party cannot supply, so groomed
+evidence must still pass a second credential. Deployments SHOULD therefore treat the promotion
+predicate as a filter and never as an authorization, and ratifiers SHOULD read a clean evidence
+window as the absence of recorded trouble rather than as positive evidence of trustworthiness.
 
 ### 8.2 Label latency bounds autonomy
 
@@ -929,6 +952,7 @@ nothing.
 | `0.1.0-draft` | 2026-07-24 | Initial draft for Linux Foundation agent-standards discussion. |
 | `0.2.0-draft` | 2026-07-25 | Adds the time-based **lapse** arc (§6.7.6, `certifiedUntil`, the `lapse` record type, GAL-34): a certification has a term, and its expiry is deliberately *not* a fifth demotion trigger, since a lapse asserts an absence rather than an observation. Adds reconciliation of the grant set against the live principal set in both directions (§6.11, GAL-35) — the shadow-agent case no store-only check can see. Corrects §5.1: the grant carries no integrity field of its own, and §6.9/GAL-30 now state the stored-bytes basis (a hash inside the structure it protects cannot cover the bytes as stored) plus the rule that integrity must indict tampering, never schema evolution. |
 | `0.2.1-draft` | 2026-07-29 | Introduces the **implementation-status marker** (§3) and applies it to the two clauses that are normative ahead of the reference implementation — GAL-34 / §6.7.6 (the lapse arc, tracking #255) and GAL-35 / §6.11 (two-direction reconciliation, tracking #256) — so no reader can mistake either for a shipped control. Records the shipped `attestation` field on `PromotionRecord` (§5.2), which states when one operator held both ceremony roles and so keeps §6.10's non-repudiation claim honest. Pins the canonical JSON encoding for all GAL objects (§3), previously deferred despite §6.9's stored-bytes integrity basis making it interoperability-critical. Resolves the `evidence` reference format as an opaque, integrity-bound, implementation-defined string (§5.1, §5.2) and pins the `CorroborationRecord` field set (§5.3), including the deliberate exclusion of per-source provenance. Adds the audit's honest limit (§6.11): it verifies signatures, never the cited evidence. Corrects §4.3/§5.2, which said "four record types" over a five-row table. |
+| `0.2.2-draft` | 2026-08-03 | Corrects §8.1 (Evidence poisoning), whose mitigation direction and normative SHOULD were both keyed on taint while the attack they name does not require it (#342). Grooming a promotion needs no tainted turn: a patient adversary, or drift with no adversary, can produce a clean behavioral record that the predicate rewards, leaving a taint-aware evidence window nothing to weight. §8.1 now separates tainted from untainted grooming, keeps the existing taint-aware guidance scoped to the first, adds a MUST NOT against reading absence of taint as absence of grooming, and states the structural asymmetry that motivates both: taint is a ratchet and cannot be farmed, whereas an evidence window rewarding accumulated clean behavior is a credit mechanism whose state the subject improves through its own conduct. Names maker≠checker ratification (§6.4), not the predicate, as what bounds the untainted case, and directs ratifiers to read a clean window as absence of recorded trouble rather than as positive evidence of trustworthiness. No clause, schema, or wire change; §8.1 carries no conformance clause. |
 
 ### 10.2 Reference implementation
 

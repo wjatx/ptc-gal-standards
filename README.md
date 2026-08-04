@@ -43,7 +43,12 @@ Names PTC and GAL are final (wes, 2026-07-24). 0.1.0-draft was prepared for fili
 week of 2026-07-27; 0.2.0-draft (2026-07-25) folded in the #223 signed-set widening and the Five
 Eyes conformance read (`docs/references/five-eyes-agentic-guidance.md`) and corrected two places
 where spec text had fallen behind the shipped contracts (PTC §6.10/PTC-31, GAL §5.1/§6.9).
-**`0.2.1-draft` (2026-07-29) supersedes both and is the version to file.**
+**`0.2.1-draft` (2026-07-29) superseded both and is the version filed and presented to the LF on
+2026-07-30.** The two specs have since diverged by one revision: **GAL is at `0.2.2-draft`
+(2026-08-03)**, correcting §8.1's evidence-poisoning mitigation, which was keyed on taint while the
+attack it names does not require it (#342). Section numbering is unchanged. PTC remains at
+`0.2.1-draft`; the same adversary-keyed framing in its §9 item 6 is #343, deliberately split so the
+two specs do not bump on one pass.
 
 **Both Five Eyes gaps that became GAL clauses landed as normative text, and both are marked
 unimplemented**: FE-1 is the certification-term / lapse arc (GAL §6.7.6, `certifiedUntil`, the
