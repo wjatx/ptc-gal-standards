@@ -69,6 +69,19 @@ encoding. The remaining feeder is #180 cross-relay attribution, still declared o
 
 ---
 
+**Companion reading (non-normative).** [`lf-standards-brief.md`](lf-standards-brief.md) is the short
+framing: what the two seams are, and why they belong in a standards track rather than in one
+vendor's design. [`sci-fi-primer.md`](sci-fi-primer.md) walks the same ground through familiar films,
+for a reviewer meeting both seams for the first time. Paragraphs are labeled PTC or GAL, there are no
+clause IDs, and it carries its own section on what neither proposal solves. Neither document is
+normative and neither should be cited for a requirement.
+
+**Unlike the diagram pages below, these two are copies.** Both are edited in the safe-agents working
+tree (`docs/lf-standards-brief.md`, `docs/sci-fi-primer.md`) and copied here, so an edit made in this
+repo is one the next upstream copy will overwrite.
+
+---
+
 **Visual resources — THIS REPO IS THE CANONICAL HOME of the diagram pages** (they are not part
 of the spec snapshot): [`trust-bricks.md`](trust-bricks.md) renders the safe-agents composition
 model as mermaid diagrams inline on GitHub; [`trust-bricks.html`](trust-bricks.html) is the full
