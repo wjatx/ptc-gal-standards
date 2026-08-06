@@ -1,7 +1,7 @@
 # PTC — Provenance & Trust Context, Specification
 
-**Version:** 0.2.1-draft
-**Date:** 2026-07-29
+**Version:** 0.2.3-draft
+**Date:** 2026-08-06
 **Status:** Draft for Linux Foundation agent-standards discussion. Wire schemas may change before
 1.0; see Open Problems and Future Extensions.
 **IPR:** This document is shared **for discussion only**. No license or other right to any
@@ -66,6 +66,24 @@ The key words MUST, MUST NOT, REQUIRED, SHALL, SHALL NOT, SHOULD, SHOULD NOT, RE
 OPTIONAL are to be interpreted as described in RFC 2119 as clarified by RFC 8174, when and only
 when they appear in all capitals.
 
+**Implementation status markers.** This specification is derived from a running reference
+implementation rather than drafted ahead of one, and its normative text is overwhelmingly a
+description of mechanism that exists and has been exercised. Where a clause is deliberately
+normative *ahead* of that implementation — because the design question is settled and the
+specification tier is the honest place to settle it while the code catches up — it is marked
+wherever a reader can meet it, with a line of exactly this form:
+
+> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #NNN).
+
+A table row carries the short inline form `(not yet implemented — #NNN)`, which means the same
+thing. A marked clause is fully normative: an implementation claiming conformance MUST satisfy
+it, and the marker is simultaneously a statement that the reference implementation does not yet.
+**Absence of the marker means the clause is implemented in the reference implementation** — which
+is what makes its presence worth anything — and no conformance claim, by this project or any
+other, may cite a marked clause as a shipped control. A specification clause is a requirement,
+never evidence that anything enforces it. The convention is shared with the companion GAL
+specification, which defines it in its §3.
+
 | Term | Definition |
 |---|---|
 | **principal** | The identity under which an agent acts and against which authority, budgets, and audit records are scoped. An envelope addresses exactly one target principal. |
@@ -118,16 +136,21 @@ minimum levels, receiver-derived per-hop levels) is deferred to a later version 
 
 ### 3.3 Decision verbs
 
-The gate's closed verb alphabet. Exactly five; `transform` is value-producing (it emits an
-operation plus clamped arguments, not a boolean).
+The gate's closed verb alphabet. Exactly five; `transform` is value-producing (it emits a
+substituted operation plus clamped arguments, not a boolean).
 
 | Verb | Meaning |
 |---|---|
 | `allow` | execute the call as asked |
 | `deny` | refuse the call |
-| `transform` | execute a safer variant: a substituted operation and/or clamped arguments |
+| `transform` | execute a safer variant: a substituted operation plus clamped arguments (argument clamping: not yet implemented — #358) |
 | `require_approval` | hold the call for out-of-band human ratification before execution |
 | `abstain` | decline to decide; surface to a human without executing |
+
+> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation
+> (tracking: #358). Applies to the **argument-clamping half of `transform` only**: the reference
+> gate substitutes the operation and passes arguments through byte-for-byte. Operation
+> substitution is implemented and exercised; the other four verbs are unaffected.
 
 Grant levels (`in-loop` / `on-loop` / `out-of-loop`) are **not** PTC vocabulary: they are the
 autonomy rungs of the companion GAL specification, orthogonal to the five verbs; PTC constrains
@@ -477,7 +500,8 @@ gate's escalation is a *consequence to be monitored*, not an outcome to be trust
 
 This has a consequence for any policy language a deployment might substitute for the reference
 gate. A language whose outcome alphabet is two-valued (permit / forbid) cannot express `transform`,
-which must emit an operation plus clamped arguments — and for the same reason it cannot host the
+which must emit a substituted operation plus clamped arguments
+(argument clamping: not yet implemented — #358) — and for the same reason it cannot host the
 polarity seam, since a positive safe action is a positive action *with arguments*. The
 value-producing verb and the caller-owned polarity seam are one requirement seen twice. A
 conforming gate language MUST therefore support a value-producing outcome, and MUST support
@@ -690,7 +714,7 @@ One table; the **Role** column names the conformance role each clause binds ("Al
 | PTC-22 | Receiver | Verification MAY be off; with it off, unsigned traffic passes and the deployment's maturity tier (§7) and observer attribution strength degrade accordingly — stated consequences, never silent ones. | SIGNING S5 |
 | PTC-23 | Receiver | Evidence-of-check is stamped only by the gate that performed the check, only when it ran; downstream consumers never fabricate, infer, or override it. | SIGNING (gate evidence); WATCHDOG W8 |
 | PTC-24 | Receiver (gate) | The decision function is pure, deterministic, and model-free; facts are pre-resolved into a closed fact set with no model-derived field; evaluation is first-match over an ordered rule set; the matched rule is recorded; unmatched writes default-deny. | deterministic-gate |
-| PTC-25 | Receiver (gate) | The verb alphabet is exactly `allow` / `deny` / `transform` / `require_approval` / `abstain`; `transform` produces an operation plus clamped arguments; model-authored arguments never change the verb. | deterministic-gate |
+| PTC-25 | Receiver (gate) | The verb alphabet is exactly `allow` / `deny` / `transform` / `require_approval` / `abstain`; `transform` produces a substituted operation plus clamped arguments (argument clamping: not yet implemented — #358); model-authored arguments never change the verb. | deterministic-gate |
 | PTC-26 | Receiver (gate) | Turn taint is source-based and non-strippable; turn identity is broker-owned; taint clears only by broker/harness-owned rollover; there is no agent-reachable clearing path. | TAINT §1, §3, §4 |
 | PTC-27 | Receiver (gate) | No-write-up is floor: a tainted turn's external write escalates through the polarity seam (`require_approval` where a human is reachable, `deny` otherwise), grant-independently, with no silent `transform` downgrade; the cut is never tunable off. | TAINT §5, §1.1 |
 | PTC-28 | Receiver (gate) | Endorsement (declassification) is configuration-declared, per-source, audited, and raise-only; never model- or agent-declared, never per-content, never a lowering operator. | TAINT §1.1, §2 |
@@ -800,6 +824,8 @@ minted at runtime**; carriage bindings, signature key substrates, transparency-l
 | 0.1.0-draft | 2026-07-24 | First consolidated normative draft, unifying the reference implementation's contract-tier documents (envelope, trust-mapping, signing, publish, screening, watchdog, taint floor, deterministic gate, MCP host posture) for Linux Foundation agent-standards discussion. |
 | 0.2.0-draft | 2026-07-25 | Adds §6.12 (availability: forced abstention and approval-queue amplification) with PTC-42/43, promoting material previously confined to reference-implementation doctrine; states the gate-language expressiveness floor (value-producing verb, quantification over provenance) in §6.8 and §1.2 with the differential-test record; states the message-layer-versus-mutual-TLS choice in §1.2; adds §9.6–§9.7. Corrects PTC-31 and §6.10: the admitted definition hash covers every advertised field with non-advertised fields excluded from the preimage, not a fixed four — aligning the spec with the shipped contract (MCP-HOST M1). |
 | 0.2.1-draft | 2026-07-29 | Resolves the signing-identifier question left open in §6.6, splitting it: the DSSE `payloadType` and statement `_type` are PINNED to in-toto's own registered identifiers (adopted, not minted), while `predicateType` is pinned by **shape** — absolute, explicitly versioned, one URI per statement kind — with the namespace left for the adopting standards body, since a vendor domain in a normative identifier makes conformance depend on one organization's DNS. Also states the document's discussion-only IPR posture and replaces version-relative scope language with "this version" / "this specification". |
+| 0.2.2-draft | 2026-08-06 | Resolved a contradiction in which PTC-25, §3.3's preamble and §6.8 required `transform` to produce an operation **plus** clamped arguments while §3.3's own verb table stated an "and/or" form, by softening all four to "and/or". Superseded within the day by 0.2.3-draft, which resolves the same contradiction in the other direction; recorded rather than removed, because the LF received 0.2.1-draft and the intervening revision is part of the record. |
+| 0.2.3-draft | 2026-08-06 | Resolves the `transform` contradiction 0.2.2-draft resolved the wrong way. The requirement is the **plus** form in all four places, including §3.3's verb table, and the argument-clamping half now carries the §3-style implementation-status marker (tracking #358) in each place a reader meets it. The earlier softening treated the specification as a description of the reference implementation; it is a description of the design, and the honest way to state a settled requirement the code has not reached is to mark it, not to weaken it. This also restores §6.8's polarity-seam argument, which turns on `transform` emitting *arguments* specifically and was materially weakened by the "and/or" form. Adopting the marker here makes PTC's convention identical to GAL's, where two clauses have carried it since 0.2.1-draft. |
 
 ## 12. References
 

@@ -33,7 +33,8 @@ implementation says so, in a machine-readable marker**:
 > **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #NNN).
 ```
 
-The convention is defined in GAL-SPEC §3. It repeats at every place a reader can meet the clause
+The convention is defined in GAL-SPEC §3 and restated in PTC-SPEC §2; both specs use it. It repeats
+at every place a reader can meet the clause
 — the §7 conformance clause, the §6 behavior section, and the field-table row — so no route into
 the document reaches an unimplemented requirement without the caveat. **Absence of the marker
 means the clause is implemented**, which is what makes its presence worth anything. Grep for it
@@ -44,11 +45,15 @@ week of 2026-07-27; 0.2.0-draft (2026-07-25) folded in the #223 signed-set widen
 Eyes conformance read (`docs/references/five-eyes-agentic-guidance.md`) and corrected two places
 where spec text had fallen behind the shipped contracts (PTC §6.10/PTC-31, GAL §5.1/§6.9).
 **`0.2.1-draft` (2026-07-29) superseded both and is the version filed and presented to the LF on
-2026-07-30.** The two specs have since diverged by one revision: **GAL is at `0.2.2-draft`
-(2026-08-03)**, correcting §8.1's evidence-poisoning mitigation, which was keyed on taint while the
-attack it names does not require it (#342). Section numbering is unchanged. PTC remains at
-`0.2.1-draft`; the same adversary-keyed framing in its §9 item 6 is #343, deliberately split so the
-two specs do not bump on one pass.
+2026-07-30.** Both specs have since moved past it, separately and for unrelated reasons. **GAL is at
+`0.2.2-draft` (2026-08-03)**, correcting §8.1's evidence-poisoning mitigation, which was keyed on
+taint while the attack it names does not require it (#342). **PTC is at `0.2.3-draft` (2026-08-06)**,
+correcting PTC-25, §3.3 and §6.8, which required the `transform` verb to produce an operation *plus*
+clamped arguments while §3.3's own verb table said "and/or". The requirement is the "plus" form, and
+the argument-clamping half now carries the §3-style implementation-status marker rather than being
+weakened to match the reference implementation; PTC states that marker convention in its §2. Section
+numbering is unchanged in both. The same adversary-keyed framing #342 fixed in GAL is still live in
+PTC §9 item 6.
 
 **Both Five Eyes gaps that became GAL clauses landed as normative text, and both are marked
 unimplemented**: FE-1 is the certification-term / lapse arc (GAL §6.7.6, `certifiedUntil`, the
