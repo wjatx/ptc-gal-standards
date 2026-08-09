@@ -18,12 +18,6 @@ Author: **Wes Jackson (Red Hat)**.
 
 Copyright © 2026 **Red Hat, Inc.**
 
-Contributor of record for the purposes of §2.1.1 is Red Hat, Inc. Recorded basis: Red Hat is a
-sponsor of the Agentic AI Foundation and LF Edge, and the attribution was ruled on by wes on
-2026-08-08. The basis is recorded because §2.1.1 makes the named Contributor the grantor of a
-license to its Necessary Claims, which is a larger act than a copyright notice and should be
-traceable to a decision rather than to a default.
-
 ## Code of Conduct
 
 Contact for Code of Conduct issues or inquiries: _pending — to be set when the Working Group names
