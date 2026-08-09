@@ -4,13 +4,9 @@ Specifications: **PTC** (*Provenance & Trust Context*) and **GAL** (*Grant & Aut
 
 Working Group: **LF Edge + Agentic AI Foundation (AAIF)**.
 
-Licensed under the Community Specification License 1.0 (`SPDX-License-Identifier:
-Community-Spec-1.0`); see `LICENSE.md`. The reference implementation is licensed separately under
-Apache-2.0, because the Community Specification License states it is not intended for source code.
-
-Per §1.2, attribution for derivative works runs to the Working Group and must carry the material's
-name, version number, and the source it was retrieved from. Attribution is **not** required for
-implementations of the specification.
+Licensed under the Community Specification License 1.0
+(`SPDX-License-Identifier: Community-Spec-1.0`); see `LICENSE.md`. The reference implementation is
+licensed separately under Apache-2.0.
 
 ## Authorship and copyright
 
@@ -20,10 +16,7 @@ Copyright © 2026 **Red Hat, Inc.**
 
 ## Code of Conduct
 
-Contact for Code of Conduct issues or inquiries: _pending — to be set when the Working Group names
-its contacts._ The Community Specification guidance recommends two named individuals rather than a
-generic mailing list, so that someone submitting a complaint knows who receives it, and so that a
-complaint concerning one of them still has a route.
+Contact for Code of Conduct issues or inquiries: _to be named._
 
 ## License Acceptance
 

@@ -9,9 +9,6 @@
 **Copyright:** © 2026 Red Hat, Inc.
 **License:** Community Specification License 1.0 · `SPDX-License-Identifier: Community-Spec-1.0`
 See `LICENSE.md` for terms and `NOTICE.md` for attribution, acceptance, and patent exclusions.
-**This supersedes the prior discussion-only IPR posture**, under which no license or right to any
-intellectual property was granted. Implementers now hold the §1 copyright license and the §2
-patent license, including for this draft (§2.1.1.1).
 
 ## 1. Scope and non-goals
 
