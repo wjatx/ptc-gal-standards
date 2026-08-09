@@ -5,7 +5,10 @@
 | **Version** | `0.2.2-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
 | **Date** | 2026-08-03 |
-| **IPR** | This document is shared **for discussion only**. No license or other right to any intellectual property is granted, expressly or by implication, by its distribution or by any discussion of it. |
+| **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
+| **Author** | Wes Jackson (Red Hat) |
+| **Copyright** | © 2026 Red Hat, Inc. |
+| **License** | Community Specification License 1.0 · `SPDX-License-Identifier: Community-Spec-1.0`. See `LICENSE.md` for terms and `NOTICE.md` for attribution, acceptance, and patent exclusions. **This supersedes the prior discussion-only IPR posture**, under which no license or right to any intellectual property was granted. Implementers now hold the §1 copyright license and the §2 patent license, including for this draft (§2.1.1.1). |
 | **Sibling specification** | `PTC-SPEC.md` — *PTC: Provenance & Trust Context, Specification* (drafted in parallel). This document cross-references PTC by name and section topic, never by section number. |
 
 GAL specifies the autonomy layer of an agentic control system: an agent's authority to act is
