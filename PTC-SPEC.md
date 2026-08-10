@@ -83,8 +83,24 @@ it, and the marker is simultaneously a statement that the reference implementati
 **Absence of the marker means the clause is implemented in the reference implementation** — which
 is what makes its presence worth anything — and no conformance claim, by this project or any
 other, may cite a marked clause as a shipped control. A specification clause is a requirement,
-never evidence that anything enforces it. The convention is shared with the companion GAL
-specification, which defines it in its §3.
+never evidence that anything enforces it.
+
+**The inverse marker.** Drift runs both ways, and a clause the reference implementation has
+outgrown takes the mirror form:
+
+> **Implementation status:** NORMATIVE, SATISFIED BY A STRONGER MECHANISM in the reference implementation (tracking: #NNN). <Named mechanism, and why it dominates the one this clause names.>
+
+A table row carries the short inline form `(stronger mechanism — #NNN)`. It applies **only** to a
+clause mandating a mechanism, an ordering, or a procedure, never to one stating a property — a
+property can only be met or not met, so a property-shaped clause the implementation does not hold
+is a defect rather than a supersession. The marker MUST name the replacing mechanism and say why
+it dominates, meaning it holds every outcome the mandated mechanism guarantees and forecloses a
+failure that mechanism admits; merely different is not stronger. The clause stays fully normative
+and literal conformance remains conformance. Unlike the marker above, this one records that the
+*specification* is expected to move, and its tracking issue is the specification revision.
+
+**Absence of either marker** means the clause is implemented as written. The convention is shared
+with the companion GAL specification, which defines it in full in its §3.
 
 | Term | Definition |
 |---|---|

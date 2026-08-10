@@ -114,6 +114,37 @@ a specification clause is a requirement, never evidence that anything enforces i
 marked clause owns a field-table row, the row carries the short inline form
 `(not yet implemented — #NNN)`, which means the same thing.
 
+**The inverse marker.** A derived specification drifts in two directions, and the marker above
+records only one of them. Where the reference implementation has replaced a mechanism this
+specification mandates with one that holds the clause's *purpose* more strongly, the clause is
+marked with a line of exactly this form:
+
+> **Implementation status:** NORMATIVE, SATISFIED BY A STRONGER MECHANISM in the reference implementation (tracking: #NNN). <Named mechanism, and why it dominates the one this clause names.>
+
+A table row carries the short inline form `(stronger mechanism — #NNN)`. Four rules govern it,
+and the first two are what keep it from becoming a way to launder a defect:
+
+1. **It applies only to a clause that mandates a mechanism, an ordering, or a procedure.** A
+   clause stating a *property* cannot be exceeded, only met or not met, because any mechanism
+   holding the property conforms. A property-shaped clause the implementation does not hold is a
+   defect, and takes the NOT YET IMPLEMENTED marker or a fix.
+2. **The marker MUST name the replacing mechanism and state why it dominates.** "Stronger" is
+   otherwise an assertion no reader can check, and an unfalsifiable marker is worse than none.
+   *Dominates* means it holds every outcome the mandated mechanism guarantees, and forecloses a
+   failure the mandated mechanism admits. A mechanism that is merely different is not stronger,
+   and its divergence is a defect in the implementation.
+3. **The clause remains fully normative and literal conformance remains conformance.** An
+   independent implementation that builds exactly what the clause says conforms; the marker warns
+   it that a better construction is known and points at where that is being written down.
+4. **The marker records that the SPECIFICATION is expected to move**, not the implementation. This
+   is the precise inverse of the marker above, and both are transitional: one says the code will
+   catch up to the text, the other says the text will catch up to the code. The tracking issue is
+   the specification revision, and the honest end state is a clause stating the property with the
+   mechanism as one way to hold it — at which point the marker is removed.
+
+**Absence of either marker** means the clause is implemented in the reference implementation as
+written.
+
 **Canonical encoding.** Every GAL object defined in §5 MUST be serialized, whenever it is
 stored, hashed, or signed, in one canonical JSON profile: **object keys sorted in ascending
 code-point order, no insignificant whitespace (compact separators), and ASCII output** (any
@@ -521,6 +552,8 @@ mint), the record MUST be written before the grant mutation it accounts for, and
 failure in the write order MUST fall toward *less* authority — an interrupted ceremony may
 leave a record without a raised grant, never a raised grant without a record.
 
+> **Implementation status:** NORMATIVE, SATISFIED BY A STRONGER MECHANISM in the reference implementation (tracking: #374). The reference implementation commits the record and the grant mutation as a single atomic transaction. Record-before-grant orders the two writes so that an interruption between them lands on the safe side; a transaction admits no interruption between them at all, so it holds the ordering's every outcome and forecloses the partial-failure state the ordering can only bias. The conditional-write and fall-toward-less-authority requirements are satisfied as written.
+
 ### 6.5 Action-class derivation
 
 An action class derives from the operation fields the deployment already declares for each
@@ -785,6 +818,8 @@ satisfiable by a third party holding read-only access.
 - **GAL-17** Structurally invalid transitions SHALL be unconstructible (typed refusal), including any demotion target of `out-of-loop`.
 - **GAL-18** Ledger records SHALL be signed per §6.10 (workload-identity key, envelope hash bound); the issuer SHALL refuse unsigned or half-configured storage absent an explicit, recorded override.
 - **GAL-19** Grant and ledger writes SHALL be conditional, record-before-grant, with every partial failure falling toward less authority.
+
+  > **Implementation status:** NORMATIVE, SATISFIED BY A STRONGER MECHANISM in the reference implementation (tracking: #374). Both legs commit as one atomic transaction, which forecloses the interrupted-ceremony state that record-before-grant orders against. See §6.4.7.
 - **GAL-20** Promotions to `on-loop` or `out-of-loop` SHALL require `signed-lineage` provenance maturity as a deterministic predicate term; `in-loop` as a target SHALL carry no provenance ceiling.
 
 ### 7.3 Enforcer clauses
@@ -835,7 +870,7 @@ satisfiable by a third party holding read-only access.
 | GAL-16 | SCHEMAS §7 (append-only ledger); L2 |
 | GAL-17 | L1 (transition unconstructibility); grant-lifecycle §ladder |
 | GAL-18 | GAL.md §8; tce-signing-shape.md; grant-lifecycle §audit (refuse-unsigned) |
-| GAL-19 | GAL.md §11 Phase 4 (conditional writes, record-before-grant); L6 |
+| GAL-19 | GAL.md §11 Phase 4 (conditional writes, record-before-grant); L6. Satisfied by a stronger mechanism in the reference implementation (§3; tracking #374). |
 | GAL-20 | PTC.md §9; predicate `REQUIRED_PROVENANCE_MATURITY`; GAL.md §9 |
 | GAL-21 | grant-lifecycle §"Recommend → in-loop line" |
 | GAL-22 | grant-lifecycle §"write-protection seam" |
