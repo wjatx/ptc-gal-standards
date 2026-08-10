@@ -894,6 +894,47 @@ satisfiable by a third party holding read-only access.
 | GAL-34 | Five Eyes *Careful adoption of agentic AI services* (2026-05-01), the "expiry timers and recorded grant chains" pairing; `docs/references/five-eyes-agentic-guidance.md` FE-1. Normative ahead of the reference implementation (§3; tracking #255). |
 | GAL-35 | Five Eyes *Careful adoption of agentic AI services*, "periodically reconcile the registry against the live set of agents"; `docs/references/five-eyes-agentic-guidance.md` FE-2. Normative ahead of the reference implementation (§3; tracking #256). |
 
+### 7.6 Implementation Conformance Statement
+
+The clause tables of §7.2–§7.4 constitute an **implementation conformance statement proforma**
+in the sense of ISO/IEC 9646-7. This section defines how one is completed and what a conformance
+claim consists of. The convention is shared with the companion PTC specification, which mirrors
+it in its §8.4.
+
+**A conformance claim is a completed statement, not an assertion.** An implementation claiming
+conformance SHALL publish, for each role it claims, a support answer against every clause bound
+to that role. Answers are drawn from a closed set:
+
+| Answer | Meaning |
+|---|---|
+| `Y` | Supported. The implementation satisfies the clause as written. |
+| `N` | Not supported. The implementation does not satisfy the clause; the claim for that role fails. |
+| `N-A` | Not applicable. Permitted **only** where the clause carries a conditional predicate that the implementation does not meet. |
+
+**Every clause is mandatory within its role.** This specification defines no optional clauses:
+claiming a role claims all of that role's clauses, and `N-A` is never available merely because a
+capability was not built. Where a clause permits a deployment choice (GAL-9's allowance to tighten
+a derived class, for example), the permission is *inside* a mandatory clause and does not make the
+clause optional. An implementation that answers `N` anywhere is not a conforming implementation of
+that role and SHALL NOT describe itself as one; it may of course describe itself accurately, and
+a published statement with an `N` in it is more useful to a reader than a withheld one.
+
+**The reference implementation's statement is derived, never hand-written.** Its answers follow
+mechanically from the implementation-status markers of §3: an unmarked clause answers `Y`, a clause
+marked NOT YET IMPLEMENTED answers `N`. Deriving rather than authoring means the statement cannot
+drift from the markers, and the markers cannot drift from the clause list, because both are
+extracted from this document.
+
+**Traceability is bidirectional, and the second direction is the load-bearing one.** Every clause
+SHALL trace *downward* to a conformance test or an explicit recorded gap, and every conformance
+test SHALL trace *upward* to the clause id it exercises. The downward direction answers "is this
+requirement verified"; the upward direction answers "does this verification correspond to any
+requirement", which is the only direction that detects a test suite accumulating confidence about
+something the specification never asked for. The objective is borrowed from DO-178C §5.5 and §6.5.
+**Only the objective**: this specification adopts no part of that standard's process, assurance
+levels, coverage criteria, or tool qualification, and an implementation's conformance here is not
+a claim about airborne-software certification.
+
 ---
 
 ## 8. Security considerations and open problems

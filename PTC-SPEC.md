@@ -769,6 +769,34 @@ One table; the **Role** column names the conformance role each clause binds ("Al
 
 Existing conformance suites keyed to origin clause IDs remain traceable through this table.
 
+### 8.4 Implementation Conformance Statement
+
+The clause table of §8.2 constitutes an **implementation conformance statement proforma** in the
+sense of ISO/IEC 9646-7. The companion GAL specification defines the convention in full in its
+§7.6; this section states it for a reader of PTC alone.
+
+An implementation claiming conformance SHALL publish, for each role of §8.1 it claims, a support
+answer against every clause bound to that role, drawn from `Y` (supported), `N` (not supported,
+and the claim for that role fails), or `N-A` (not applicable — permitted **only** where a clause's
+conditional predicate is unmet, never merely because a capability was not built).
+
+**Every clause is mandatory within its role.** This specification defines no optional clauses.
+Where a clause admits a deployment choice — PTC-22's allowance that verification MAY be off — the
+permission sits inside a mandatory clause whose obligation (stating the consequence rather than
+degrading silently) remains binding. A **PTC Relay** completes the statement for Producer and
+Receiver both.
+
+The reference implementation's statement is **derived from the §2 implementation-status markers**
+rather than hand-written: unmarked answers `Y`, NOT YET IMPLEMENTED answers `N`. Derivation is what
+keeps the statement, the markers and the clause list from drifting apart.
+
+**Traceability is bidirectional.** Every clause SHALL trace downward to a conformance test or an
+explicit recorded gap, and every conformance test SHALL trace upward to the clause id it exercises.
+The upward direction is the one that detects a suite accumulating confidence about something this
+specification never asked for. The objective is borrowed from DO-178C §5.5 and §6.5 — **the
+objective only**, not that standard's process, assurance levels, coverage criteria, or tool
+qualification, and conformance here is not a claim about airborne-software certification.
+
 ## 9. Security considerations and open problems
 
 1. **Declassification is the classic IFC hard problem.** Deciding *when* tainted data may
