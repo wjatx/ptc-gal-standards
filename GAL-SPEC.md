@@ -761,8 +761,8 @@ predicate, enforces maker≠checker, signs the ledger record, writes the grant s
 **grant enforcer** — the broker — reads the grant per call, enforces the level's actuation
 semantics, runs the demotion evaluation, and structurally cannot be written past by the agent.
 One deployment component MAY implement both roles, but the agent MUST be neither. Audit
-clauses (GAL-31 to GAL-33) constrain the artifacts both roles produce and MUST be satisfiable
-by a third party holding read-only access.
+clauses (GAL-31 to GAL-33 and GAL-35) constrain the artifacts both roles produce and MUST be
+satisfiable by a third party holding read-only access.
 
 ### 7.2 Issuer clauses
 
