@@ -548,11 +548,16 @@ proposal is input, never authority). Proposals MUST be single-use and expiring.
 #### 6.4.7 Write discipline
 
 Ledger and grant writes MUST be conditional (append-only, never overwrite; update-only, never
-mint), the record MUST be written before the grant mutation it accounts for, and every partial
-failure in the write order MUST fall toward *less* authority — an interrupted ceremony may
-leave a record without a raised grant, never a raised grant without a record.
+mint), and **no failure MUST be able to leave a raised grant without its record** — an
+interrupted ceremony may leave a record without a raised grant, never the reverse.
 
-> **Implementation status:** NORMATIVE, SATISFIED BY A STRONGER MECHANISM in the reference implementation (tracking: #374). The reference implementation commits the record and the grant mutation as a single atomic transaction. Record-before-grant orders the two writes so that an interruption between them lands on the safe side; a transaction admits no interruption between them at all, so it holds the ordering's every outcome and forecloses the partial-failure state the ordering can only bias. The conditional-write and fall-toward-less-authority requirements are satisfied as written.
+Two constructions satisfy this and an implementation MUST state which it provides. **Ordering**
+writes the record before the grant mutation it accounts for, so an interruption between the two
+lands on the safe side. **Atomicity** commits both as one transaction, so there is no interruption
+between them to land anywhere; it holds every outcome the ordering guarantees and additionally
+forecloses the partial-failure state the ordering can only bias toward safety. Where a store
+offers a transaction, atomicity is RECOMMENDED, and the per-site write orderings that ordering
+requires become unnecessary rather than merely redundant.
 
 ### 6.5 Action-class derivation
 
@@ -573,7 +578,10 @@ quarantined by the enforcer on every call — loudly, never silently passed (§6
 
 When the envelope changes (any redeploy or tightening that churns the hash), the cure is
 **re-attestation**: a ceremony re-issuing the grant at its prior level **under human
-ratification**, appending a ledger record. It carries the prior level rather than restarting at
+ratification**. It appends no ledger record, deliberately: the ceremony ledger records level
+*changes*, and a re-attestation changes no level. Appending one would put an entry on the ledger
+that no level transition explains, and would make the re-promotion reference ambiguous. It
+carries the prior level rather than restarting at
 `lastSafeLevel` — a hard restart would turn every envelope change into an autonomy event, and
 the high-blast always-human rule (§6.4.4) already backstops the dangerous classes. An
 implementation MUST NOT silently re-mint a grant under a new envelope hash, and re-attestation
@@ -803,9 +811,9 @@ satisfiable by a third party holding read-only access.
 - **GAL-2** The `level` enumeration SHALL be complete at `in-loop`, `on-loop`, `out-of-loop`; Recommend SHALL be represented only as the absence of a grant and MUST NOT become a level value.
 - **GAL-3** Level SHALL be orthogonal to the per-call decision verbs; no verb outcome may mutate a level and no level may be inferred from a verb.
 - **GAL-4** The ceremony (and the automatic demotion path) SHALL be the grant store's only mutation paths; the issuer MUST refuse any other write.
-- **GAL-5** The promotion licensing predicate SHALL be pure and deterministic with no model output in the path, and every ambiguous input SHALL resolve to ineligible.
+- **GAL-5** The promotion licensing predicate SHALL be pure and deterministic with no model output in the path, and SHALL NEVER license a promotion on an input it cannot interpret. **Evidence** that is ambiguous — thin, absent, stale, or uncorroborated — SHALL resolve to ineligible. Input that is **structurally invalid** — a negative counter, a total exceeding its window, an unknown enumeration value — SHALL refuse loudly and SHALL NOT resolve to ineligible, because a broken evidence pipeline reported as ineligible is indistinguishable from an honest denial and directs the proposer to gather more evidence, which can never fix it. A loud refusal SHALL still produce a recorded outcome.
 - **GAL-6** The predicate SHALL evaluate at least the seven gate terms of §6.4.1 in a fixed order, with unset knobs constituting no gate.
-- **GAL-7** `proposedBy` and `ratifiedBy` on a promotion SHALL be distinct credentials, compared on credential identity; the record SHALL evidence both non-repudiably. The standard enforces two credentials and evidences — not enforces — two humans.
+- **GAL-7** `proposedBy` and `ratifiedBy` on a promotion SHALL be credentials that **a single operator cannot satisfy both of**; the comparison SHALL reject any pair a lone operator can produce, and credential-identity equality is a floor rather than the whole test. Where an identity embeds unstable components (a hostname, a session id), the comparison SHALL additionally reject pairs sharing a ceremony role, since equality alone passes the same operator twice. The record SHALL evidence both non-repudiably. The standard enforces two credentials and evidences — not enforces — two humans.
 - **GAL-8** For high-blast classes, a true predicate SHALL carry an explicit per-instance human-ratification requirement that the ceremony MUST NOT drop; an unknown blast class SHALL be an error.
 - **GAL-9** High-blast SHALL derive from declared operation fields (write ∧ external ∧ ¬reversible, unknown reversibility read as not-reversible); deployments MAY tighten the derived class, MUST NOT loosen it.
 - **GAL-10** Any evidence reviewer SHALL attach findings only; it MUST NOT license or veto, and reviewer failure SHALL degrade to a recorded finding, never a gate flip.
@@ -813,13 +821,11 @@ satisfiable by a third party holding read-only access.
 - **GAL-12** The evidence window's span and period SHALL be bound under the proposal's integrity mechanism; covered-distribution soundness SHALL be recorded as an explicit proposer assertion.
 - **GAL-13** Any level → `in-loop` SHALL be permitted without ceremony and SHALL append a `tightening`-typed record.
 - **GAL-14** Grant creation outside the ceremony SHALL emit a `bootstrap`-typed record; no grant SHALL lack a ledger counterpart.
-- **GAL-15** On envelope change, the grant SHALL be re-attested — prior level, under human ratification, with a ledger record — and the re-attestation SHALL refuse on configuration mismatch, failing toward writing nothing.
+- **GAL-15** On envelope change, the grant SHALL be re-attested — prior level, under human ratification, appending **no** ledger record, since no level changed — and the re-attestation SHALL refuse on configuration mismatch, failing toward writing nothing.
 - **GAL-16** Every level change SHALL append exactly one typed record on one append-only ledger; records SHALL never be overwritten, mutated, or removed.
 - **GAL-17** Structurally invalid transitions SHALL be unconstructible (typed refusal), including any demotion target of `out-of-loop`.
 - **GAL-18** Ledger records SHALL be signed per §6.10 (workload-identity key, envelope hash bound); the issuer SHALL refuse unsigned or half-configured storage absent an explicit, recorded override.
-- **GAL-19** Grant and ledger writes SHALL be conditional, record-before-grant, with every partial failure falling toward less authority.
-
-  > **Implementation status:** NORMATIVE, SATISFIED BY A STRONGER MECHANISM in the reference implementation (tracking: #374). Both legs commit as one atomic transaction, which forecloses the interrupted-ceremony state that record-before-grant orders against. See §6.4.7.
+- **GAL-19** Grant and ledger writes SHALL be conditional, and **no failure SHALL leave a raised grant without its ledger record**. Writing the record before the grant mutation satisfies this by ordering; committing both as one atomic transaction satisfies it by admitting no interruption. An implementation SHALL state which it provides.
 - **GAL-20** Promotions to `on-loop` or `out-of-loop` SHALL require `signed-lineage` provenance maturity as a deterministic predicate term; `in-loop` as a target SHALL carry no provenance ceiling.
 
 ### 7.3 Enforcer clauses
@@ -827,7 +833,7 @@ satisfiable by a third party holding read-only access.
 - **GAL-21** The enforcer SHALL read the grant per call; absence of a grant SHALL default-deny (Recommend), and Recommend SHALL produce no staged intent.
 - **GAL-22** The agent SHALL have no write access to the grant store, enforced structurally; a grant-store write reachable by the agent is a promotion bypass and non-conformant.
 - **GAL-23** Demotion SHALL be tripped only by the four triggers of §4.2, each derived deterministically from typed durable inputs, with no model call on the path.
-- **GAL-24** A tripped demotion SHALL lower the grant to `lastSafeLevel`; `lastSafeLevel` SHALL never be `out-of-loop`.
+- **GAL-24** A tripped demotion SHALL move the grant to `lastSafeLevel` **or lower, and SHALL NEVER raise its autonomy**; where `lastSafeLevel` ranks above the grant's current level the trip SHALL leave the level unchanged and still append its record. `lastSafeLevel` SHALL never be `out-of-loop`.
 - **GAL-25** `demotionReason` SHALL follow the fixed trigger mapping, `"failing"` dominating mixed firings, and the two reasons SHALL never be collapsed.
 - **GAL-26** Every demotion SHALL append a `demotion`-typed record (ratified by the system evaluator identity) and emit an audit event; demotion writes SHALL run under an identity separate from the agent.
 - **GAL-27** A trigger SHALL fire only for grants listing it in `demotionTriggers`; `false_action` SHALL derive from an authenticated durable counter, a single flag sufficing, and no flag SHALL ever promote.
@@ -843,7 +849,7 @@ satisfiable by a third party holding read-only access.
 
 - **GAL-31** An independent, read-only party SHALL be able to re-verify the full ledger: signatures, transition validity, envelope binding, and the no-orphan invariant.
 - **GAL-32** Audit findings SHALL be dispositioned only by signed, append-only acknowledgment artifacts binding rule + coordinate + violation digest; the waivable vocabulary SHALL be closed, integrity-tamper findings SHALL be un-waivable, and an unverifiable waiver SHALL NOT be applied.
-- **GAL-33** Each armed demotion trigger SHALL have been drilled against a live grant before being relied upon, and a promotion SHALL NOT be considered complete until the promoted grant has acted once.
+- **GAL-33** Each armed demotion trigger SHALL have been drilled against a live grant before being relied upon, and a promotion SHALL NOT be considered complete until the promoted grant has acted once. **The first act under a promoted grant SHALL be recoverable from the audit record** by a read-only party — the enforcement point writes it, and the ceremony ledger cannot, since the enforcing component is barred from writing the grant store.
 - **GAL-35** An auditor SHALL be able to reconcile the grant set against the live principal set in both directions — principals acting without a grant, and grants whose principal no longer exists — and SHALL report rather than write; retiring a grant remains a ceremony.
 
   > **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #256).
@@ -870,7 +876,7 @@ satisfiable by a third party holding read-only access.
 | GAL-16 | SCHEMAS §7 (append-only ledger); L2 |
 | GAL-17 | L1 (transition unconstructibility); grant-lifecycle §ladder |
 | GAL-18 | GAL.md §8; tce-signing-shape.md; grant-lifecycle §audit (refuse-unsigned) |
-| GAL-19 | GAL.md §11 Phase 4 (conditional writes, record-before-grant); L6. Satisfied by a stronger mechanism in the reference implementation (§3; tracking #374). |
+| GAL-19 | GAL.md §11 Phase 4 (conditional writes, no raised grant without its record); L6 |
 | GAL-20 | PTC.md §9; predicate `REQUIRED_PROVENANCE_MATURITY`; GAL.md §9 |
 | GAL-21 | grant-lifecycle §"Recommend → in-loop line" |
 | GAL-22 | grant-lifecycle §"write-protection seam" |
