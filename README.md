@@ -96,18 +96,24 @@ element, with the rung ladder, both lifecycle paths, and the maturity-ceiling jo
 the 0.2.1-draft section numbers). [`standards.html`](standards.html) is the standards landscape:
 everything adopted (connectivity, signing, identity, models, conventions), the two candidates
 declined with a published record, the conceptual ancestry, and the two proposed seams.
+[`sub-grants.html`](sub-grants.html) shows how a durable agent delegates to ephemeral sub-agents:
+broker-computed, strictly-attenuating sub-grants with full-chain attribution. Delegation is out of
+scope for GAL 0.2.x (§1.3), so that page documents reference-implementation doctrine and a
+candidate seam for a future revision, and says so on the page.
 
 The HTML pages are also published (publicly) on GitHub Pages, for presenting without a clone:
 
 - Trust bricks: https://wjatx.github.io/trust-bricks/
 - PTC & GAL data flow: https://wjatx.github.io/trust-bricks/data-flow.html
 - Standards landscape: https://wjatx.github.io/trust-bricks/standards.html
+- Sub-grant delegation: https://wjatx.github.io/trust-bricks/sub-grants.html
 
 **Sync discipline.** Every other location is a deploy target or a pointer, never an editing
 surface: the Pages repo (`wjatx/trust-bricks`) carries byte-identical copies
 (`trust-bricks.html` → `index.html`, `data-flow.html` → `data-flow.html`), and the old claude.ai
 artifacts are stubs pointing at the Pages URLs. The file mapping is `trust-bricks.html` →
-`index.html`, `data-flow.html` → `data-flow.html`, `standards.html` → `standards.html`. To
+`index.html`, `data-flow.html` → `data-flow.html`, `standards.html` → `standards.html`,
+`sub-grants.html` → `sub-grants.html`. To
 update a diagram: edit it HERE, copy into the Pages repo, push both. Never edit a copy in place.
 
 ---

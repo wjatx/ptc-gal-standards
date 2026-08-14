@@ -1,0 +1,370 @@
+<!doctype html>
+<!-- Canonical source: github.com/wjatx/ptc-gal-standards (sub-grants.html).
+     Edit there; every other copy (Pages, artifacts) is a deploy target. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sub-grants: delegation that only narrows</title>
+<style>
+  :root{
+    color-scheme:light dark;
+    --ground:#F5F6F9; --surface:#FFFFFF; --band:#ECEEF3;
+    --ink:#151A22; --ink-2:#545C6E; --ink-3:#7C8496;
+    --line:#D6DAE3; --line-strong:#BEC4D0;
+    --gal:#6A4FB0; --gal-t:#55408F; --gal-tint:rgba(106,79,176,0.11);
+    --sign:#B0771A; --sign-t:#8F5F14; --sign-tint:rgba(176,119,26,0.10);
+    --idn:#2C7D70; --idn-t:#21635A; --idn-tint:rgba(44,125,112,0.11);
+    --wire:#7C8496; --wire-tint:rgba(124,132,150,0.10);
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Menlo","Consolas",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    --shadow:0 1px 2px rgba(20,26,34,.05),0 8px 24px rgba(20,26,34,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#0B0E13; --surface:#12161D; --band:#161B23;
+      --ink:#E8EBF1; --ink-2:#9BA3B4; --ink-3:#6D7688;
+      --line:#262C37; --line-strong:#39414F;
+      --gal:#A78BE8; --gal-t:#B7A2F0; --gal-tint:rgba(167,139,232,0.14);
+      --sign:#E4AC4C; --sign-t:#E9B860; --sign-tint:rgba(228,172,76,0.12);
+      --idn:#54BFAD; --idn-t:#6FCEBD; --idn-tint:rgba(84,191,173,0.13);
+      --wire:#8D96A8; --wire-tint:rgba(141,150,168,0.12);
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0B0E13; --surface:#12161D; --band:#161B23;
+    --ink:#E8EBF1; --ink-2:#9BA3B4; --ink-3:#6D7688;
+    --line:#262C37; --line-strong:#39414F;
+    --gal:#A78BE8; --gal-t:#B7A2F0; --gal-tint:rgba(167,139,232,0.14);
+    --sign:#E4AC4C; --sign-t:#E9B860; --sign-tint:rgba(228,172,76,0.12);
+    --idn:#54BFAD; --idn-t:#6FCEBD; --idn-tint:rgba(84,191,173,0.13);
+    --wire:#8D96A8; --wire-tint:rgba(141,150,168,0.12);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); line-height:1.55; font-size:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px; margin:0 auto; padding:48px 24px 80px}
+  header.top{margin-bottom:36px; position:relative}
+  .themebtn{
+    position:absolute; top:0; right:0; font-family:var(--mono); font-size:11px;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3);
+    background:var(--surface); border:1px solid var(--line); border-radius:6px;
+    padding:6px 10px; cursor:pointer;
+  }
+  .themebtn:hover{color:var(--ink); border-color:var(--gal)}
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--ink-3); margin:0 0 10px;
+  }
+  h1{
+    font-size:clamp(28px,4.5vw,38px); line-height:1.14; margin:0 0 14px;
+    letter-spacing:-.015em; text-wrap:balance; font-weight:700; max-width:24ch;
+  }
+  .lede{font-size:18px; color:var(--ink-2); max-width:62ch; margin:0}
+  .lede strong{color:var(--ink)}
+  h2{font-size:21px; margin:52px 0 8px; letter-spacing:-.01em; text-wrap:balance}
+  p{max-width:68ch; color:var(--ink-2); margin:10px 0}
+  p strong{color:var(--ink)}
+  code{
+    font-family:var(--mono); font-size:.86em; background:var(--band);
+    border:1px solid var(--line); border-radius:4px; padding:1px 5px;
+    white-space:nowrap;
+  }
+  figure{
+    margin:20px 0 0; background:var(--surface); border:1px solid var(--line);
+    border-radius:10px; box-shadow:var(--shadow); padding:20px 16px 12px;
+    overflow-x:auto;
+  }
+  figure svg{display:block; min-width:720px; max-width:100%; height:auto; margin:0 auto; color:var(--ink-2)}
+  figcaption{
+    font-size:13.5px; color:var(--ink-3); max-width:74ch;
+    padding:12px 8px 4px; border-top:1px solid var(--line); margin-top:14px;
+  }
+  figcaption b{color:var(--ink-2); font-weight:600}
+  .quote{
+    border-left:3px solid var(--gal); background:var(--gal-tint);
+    border-radius:0 8px 8px 0; padding:14px 18px; margin:24px 0; max-width:66ch;
+  }
+  .quote p{margin:0; color:var(--ink); font-size:16.5px}
+  .quote cite{display:block; margin-top:8px; font-style:normal; font-family:var(--mono); font-size:12px; color:var(--ink-3)}
+  .status{
+    display:flex; gap:10px; align-items:baseline; margin:40px 0 0;
+    background:var(--sign-tint); border:1px solid var(--sign);
+    border-radius:8px; padding:12px 16px; max-width:72ch;
+  }
+  .status .tag{
+    font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--sign-t); font-weight:700; white-space:nowrap;
+  }
+  .status p{margin:0; font-size:14px; color:var(--ink-2)}
+  footer{
+    margin-top:48px; padding-top:16px; border-top:1px solid var(--line);
+    font-family:var(--mono); font-size:12px; color:var(--ink-3); line-height:1.8;
+    display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  }
+  footer .note{max-width:60ch}
+  footer a{color:var(--ink-2)}
+  .legend{
+    display:flex; flex-wrap:wrap; gap:18px; margin:18px 0 4px;
+    font-size:13px; color:var(--ink-2);
+  }
+  .legend span{display:inline-flex; align-items:center; gap:8px}
+  .sw{width:34px; height:0; border-top:2.5px solid var(--gal); display:inline-block}
+  .sw.dash{border-top-style:dashed}
+  .sw.teal{border-color:var(--idn)}
+  .sw.amber{border-color:var(--sign)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <button class="themebtn" id="tg" type="button">◐ theme</button>
+  <p class="eyebrow">safe-agents · broker contract · sub-grants</p>
+  <h1>Delegation that only narrows</h1>
+  <p class="lede">Durable agents act over weeks; the sub-agents they spawn live for minutes.
+  The contract that keeps that safe: <strong>a sub-agent holds no standing authority of its
+  own</strong>. It runs on a broker-computed derivative of its parent's grant, and everything it
+  does attributes up the chain to the human.</p>
+  <div class="legend" aria-label="Line-style key">
+    <span><span class="sw"></span>durable · ceremony-minted, standing</span>
+    <span><span class="sw dash"></span>ephemeral · derived, short-lived</span>
+    <span><span class="sw teal"></span>identity chain</span>
+    <span><span class="sw amber"></span>refusal</span>
+  </div>
+</header>
+
+<h2>1 · The agent can only ask</h2>
+<p>The parent never issues a sub-grant. It <em>requests</em> a delegation scope; the broker
+intersects that request against the parent's current authority and issues the result, or refuses.
+The refusal is itself an audit record.</p>
+
+<figure>
+<svg viewBox="0 0 860 330" role="img" aria-label="A parent agent requests a delegation scope from the broker. The broker intersects it against the parent's grant and issues an attenuated sub-grant to an ephemeral sub-agent session, or refuses a widening request and writes a denied audit record.">
+  <defs>
+    <marker id="aw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" style="fill:var(--gal)"/>
+    </marker>
+    <marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" style="fill:var(--sign)"/>
+    </marker>
+    <marker id="at" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" style="fill:var(--idn)"/>
+    </marker>
+  </defs>
+
+  <rect x="30" y="120" width="130" height="58" rx="8" style="fill:var(--idn-tint); stroke:var(--idn)" stroke-width="2"/>
+  <text x="95" y="145" text-anchor="middle" font-size="13.5" font-weight="600" style="fill:var(--ink)">Human</text>
+  <text x="95" y="163" text-anchor="middle" font-size="11.5" style="fill:var(--ink-2)">principal</text>
+
+  <line x1="160" y1="149" x2="222" y2="149" style="stroke:var(--idn)" stroke-width="1.8" marker-end="url(#at)"/>
+  <text x="191" y="138" text-anchor="middle" font-size="10.5" font-family="var(--mono)" style="fill:var(--idn-t)">ceremony</text>
+  <text x="191" y="166" text-anchor="middle" font-size="10.5" font-family="var(--mono)" style="fill:var(--idn-t)">mints G</text>
+
+  <rect x="228" y="112" width="158" height="74" rx="8" style="fill:var(--gal-tint); stroke:var(--gal)" stroke-width="2.5"/>
+  <text x="307" y="138" text-anchor="middle" font-size="13.5" font-weight="600" style="fill:var(--ink)">Parent agent</text>
+  <text x="307" y="156" text-anchor="middle" font-size="11.5" style="fill:var(--ink-2)">durable · holds</text>
+  <text x="307" y="172" text-anchor="middle" font-size="11.5" font-family="var(--mono)" style="fill:var(--gal-t)">Grant G</text>
+
+  <line x1="386" y1="136" x2="470" y2="136" stroke="currentColor" stroke-width="1.6" marker-end="url(#aw)"/>
+  <text x="428" y="124" text-anchor="middle" font-size="10.5" style="fill:var(--ink-2)">requests scope</text>
+  <text x="428" y="152" text-anchor="middle" font-size="10" font-family="var(--mono)" style="fill:var(--ink-3)">tools · level · caps</text>
+
+  <rect x="476" y="96" width="180" height="106" rx="8" style="fill:var(--surface); stroke:var(--ink)" stroke-width="2.5"/>
+  <text x="566" y="120" text-anchor="middle" font-size="13.5" font-weight="700" style="fill:var(--ink)">BROKER</text>
+  <text x="566" y="140" text-anchor="middle" font-size="11" style="fill:var(--ink-2)">computes, deterministically:</text>
+  <text x="566" y="158" text-anchor="middle" font-size="11" font-family="var(--mono)" style="fill:var(--ink-2)">∩ intersect with G</text>
+  <text x="566" y="174" text-anchor="middle" font-size="11" font-family="var(--mono)" style="fill:var(--ink-2)">clamp expiry &lt; G's TTL</text>
+  <text x="566" y="190" text-anchor="middle" font-size="11" font-family="var(--mono)" style="fill:var(--ink-2)">refuse any widening</text>
+
+  <line x1="656" y1="136" x2="716" y2="136" style="stroke:var(--gal)" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#ag)"/>
+  <text x="686" y="124" text-anchor="middle" font-size="10.5" font-family="var(--mono)" style="fill:var(--gal-t)">issues SG</text>
+
+  <rect x="722" y="112" width="118" height="74" rx="8" style="fill:var(--surface); stroke:var(--gal)" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="781" y="138" text-anchor="middle" font-size="13.5" font-weight="600" style="fill:var(--ink)">Sub-agent</text>
+  <text x="781" y="156" text-anchor="middle" font-size="11.5" style="fill:var(--ink-2)">ephemeral</text>
+  <text x="781" y="172" text-anchor="middle" font-size="10.5" font-family="var(--mono)" style="fill:var(--gal-t)">session = SG only</text>
+
+  <text x="781" y="212" text-anchor="middle" font-size="10.5" style="fill:var(--ink-3)">ungranted tools do not</text>
+  <text x="781" y="226" text-anchor="middle" font-size="10.5" style="fill:var(--ink-3)">exist in its world</text>
+
+  <line x1="566" y1="202" x2="566" y2="252" style="stroke:var(--sign)" stroke-width="1.6" marker-end="url(#as)"/>
+  <text x="580" y="232" font-size="10.5" style="fill:var(--sign-t)">if any dimension would widen</text>
+  <rect x="440" y="258" width="252" height="42" rx="7" style="fill:var(--sign-tint); stroke:var(--sign)" stroke-width="1.5"/>
+  <text x="566" y="276" text-anchor="middle" font-size="11.5" font-weight="600" style="fill:var(--ink)">AuditRecord · outcome: denied</text>
+  <text x="566" y="292" text-anchor="middle" font-size="10.5" font-family="var(--mono)" style="fill:var(--sign-t)">reason: "sub-grant-would-widen"</text>
+</svg>
+<figcaption><b>Issuance is broker-side and deterministic.</b> The parent proposes; the broker
+intersects the proposal against Grant G's <em>remaining</em> authority, clamps the expiry, and
+refuses any request that would widen on any dimension, logging the denial. The sub-agent's broker
+session is initialized with the sub-grant alone: tools outside it do not exist in the session, so
+there is nothing to deny.</figcaption>
+</figure>
+
+<h2>2 · Three dimensions, none may widen</h2>
+<p>A sub-grant attenuates along all three dimensions simultaneously: oversight level, tool set,
+and envelope. The computation may not widen any of them.</p>
+
+<figure>
+<svg viewBox="0 0 860 250" role="img" aria-label="Three panels: oversight level can only stay equal or become more supervised; the tool set can only be a strict subset of the parent's; envelope caps are intersected and expiry is always shorter than the parent's remaining TTL.">
+  <defs>
+    <marker id="ag2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" style="fill:var(--gal)"/>
+    </marker>
+  </defs>
+
+  <text x="150" y="28" text-anchor="middle" font-size="12.5" font-weight="700" style="fill:var(--ink)">level ≤ parent's</text>
+  <g font-family="var(--mono)" font-size="11">
+    <rect x="60" y="48" width="180" height="30" rx="6" style="fill:var(--wire-tint); stroke:var(--line-strong)" stroke-width="1.3"/>
+    <text x="150" y="67" text-anchor="middle" style="fill:var(--ink-3)">out-of-loop</text>
+    <rect x="60" y="86" width="180" height="30" rx="6" style="fill:var(--gal-tint); stroke:var(--gal)" stroke-width="2"/>
+    <text x="150" y="105" text-anchor="middle" style="fill:var(--ink)">on-loop · parent</text>
+    <rect x="60" y="124" width="180" height="30" rx="6" style="fill:var(--surface); stroke:var(--gal)" stroke-width="1.6" stroke-dasharray="6 4"/>
+    <text x="150" y="143" text-anchor="middle" style="fill:var(--ink-2)">in-loop · allowed</text>
+  </g>
+  <line x1="252" y1="101" x2="252" y2="139" style="stroke:var(--gal)" stroke-width="1.6" marker-end="url(#ag2)"/>
+  <text x="150" y="180" text-anchor="middle" font-size="10.5" style="fill:var(--ink-3)">equal or more supervised,</text>
+  <text x="150" y="194" text-anchor="middle" font-size="10.5" style="fill:var(--ink-3)">never more autonomous</text>
+
+  <text x="440" y="28" text-anchor="middle" font-size="12.5" font-weight="700" style="fill:var(--ink)">toolSet ⊂ parent's</text>
+  <rect x="330" y="44" width="220" height="116" rx="8" style="fill:var(--gal-tint); stroke:var(--gal)" stroke-width="2"/>
+  <text x="345" y="62" font-size="10" font-family="var(--mono)" style="fill:var(--gal-t)">parent holds</text>
+  <g font-family="var(--mono)" font-size="10.5">
+    <rect x="345" y="72" width="92" height="24" rx="12" style="fill:var(--surface); stroke:var(--line-strong)" stroke-width="1.2"/>
+    <text x="391" y="88" text-anchor="middle" style="fill:var(--ink-2)">email.send</text>
+    <rect x="447" y="72" width="88" height="24" rx="12" style="fill:var(--surface); stroke:var(--line-strong)" stroke-width="1.2"/>
+    <text x="491" y="88" text-anchor="middle" style="fill:var(--ink-2)">email.read</text>
+    <rect x="360" y="112" width="160" height="36" rx="8" style="fill:var(--surface); stroke:var(--gal)" stroke-width="1.6" stroke-dasharray="6 4"/>
+    <rect x="374" y="118" width="132" height="24" rx="12" style="fill:var(--gal-tint); stroke:var(--gal)" stroke-width="1.4"/>
+    <text x="440" y="134" text-anchor="middle" style="fill:var(--ink)">calendar.read</text>
+  </g>
+  <text x="440" y="106" text-anchor="middle" font-size="9.5" font-family="var(--mono)" style="fill:var(--gal-t)">sub-grant SG</text>
+  <g font-family="var(--mono)" font-size="10.5">
+    <rect x="343" y="176" width="98" height="24" rx="12" style="fill:none; stroke:var(--line)" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <text x="392" y="192" text-anchor="middle" style="fill:var(--ink-3)">payments.*</text>
+  </g>
+  <text x="452" y="192" font-size="10.5" style="fill:var(--ink-3)">not held → not grantable</text>
+
+  <text x="710" y="28" text-anchor="middle" font-size="12.5" font-weight="700" style="fill:var(--ink)">envelope ∩ · expiry &lt;</text>
+  <g font-size="10.5" font-family="var(--mono)">
+    <text x="620" y="66" style="fill:var(--ink-2)">caps</text>
+    <rect x="620" y="74" width="200" height="14" rx="4" style="fill:var(--gal-tint); stroke:var(--gal)" stroke-width="1.6"/>
+    <rect x="620" y="94" width="120" height="14" rx="4" style="fill:var(--surface); stroke:var(--gal)" stroke-width="1.4" stroke-dasharray="5 3"/>
+    <text x="748" y="105" font-size="9.5" style="fill:var(--ink-3)">≤ remaining</text>
+    <text x="620" y="140" style="fill:var(--ink-2)">expiry</text>
+    <rect x="620" y="148" width="200" height="14" rx="4" style="fill:var(--gal-tint); stroke:var(--gal)" stroke-width="1.6"/>
+    <rect x="620" y="168" width="88" height="14" rx="4" style="fill:var(--surface); stroke:var(--gal)" stroke-width="1.4" stroke-dasharray="5 3"/>
+    <text x="716" y="179" font-size="9.5" style="fill:var(--ink-3)">always &lt; parent TTL</text>
+  </g>
+  <text x="710" y="212" text-anchor="middle" font-size="10.5" style="fill:var(--ink-3)">intersection of parent's remaining</text>
+  <text x="710" y="226" text-anchor="middle" font-size="10.5" style="fill:var(--ink-3)">bounds; never a higher blast radius</text>
+</svg>
+<figcaption><b>Attenuation is simultaneous.</b> An <code>in-loop</code> parent can only spawn
+<code>in-loop</code> children; the tool subset is enforced structurally by the capability-scoped
+registry; caps intersect against what the parent has left at issuance. An ephemeral child
+structurally cannot outlive or outspend its durable parent's authority.</figcaption>
+</figure>
+
+<h2>3 · The audit chain survives the sub-agent</h2>
+<p>Sub-agents come and go inside the parent grant's lifetime. What persists is the record: every
+<code>BrokeredCall</code> a sub-agent makes carries the full delegation chain, populated by the
+broker from its own sub-grant record, never from anything the sub-agent asserts.</p>
+
+<figure>
+<svg viewBox="0 0 860 330" role="img" aria-label="A timeline: the human principal's identity line runs the whole width; the parent agent's grant is a long solid bar; three sub-agents appear as short dashed bars strictly inside it; each drops audit records onto a tape band that continues after every sub-agent has ended.">
+  <defs>
+    <marker id="aw3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <g font-size="11.5" font-weight="600">
+    <text x="30" y="56" style="fill:var(--idn-t)">human</text>
+    <text x="30" y="106" style="fill:var(--gal-t)">parent</text>
+    <text x="30" y="162" style="fill:var(--gal-t)">sub-agents</text>
+    <text x="30" y="252" style="fill:var(--ink-2)">audit tape</text>
+  </g>
+
+  <line x1="120" y1="52" x2="830" y2="52" style="stroke:var(--idn)" stroke-width="2.5"/>
+  <text x="700" y="42" font-size="10.5" style="fill:var(--idn-t)">accountable throughout</text>
+
+  <rect x="140" y="90" width="560" height="24" rx="6" style="fill:var(--gal-tint); stroke:var(--gal)" stroke-width="2"/>
+  <text x="420" y="106" text-anchor="middle" font-size="11" font-family="var(--mono)" style="fill:var(--ink)">Grant G · durable, ceremony-minted</text>
+  <line x1="700" y1="82" x2="700" y2="122" style="stroke:var(--gal)" stroke-width="1.5"/>
+  <text x="708" y="88" font-size="10" font-family="var(--mono)" style="fill:var(--gal-t)">G expires</text>
+
+  <g>
+    <rect x="180" y="148" width="100" height="20" rx="6" style="fill:var(--surface); stroke:var(--gal)" stroke-width="1.6" stroke-dasharray="6 4"/>
+    <text x="230" y="162" text-anchor="middle" font-size="10" font-family="var(--mono)" style="fill:var(--ink-2)">SG₁</text>
+    <rect x="340" y="148" width="80" height="20" rx="6" style="fill:var(--surface); stroke:var(--gal)" stroke-width="1.6" stroke-dasharray="6 4"/>
+    <text x="380" y="162" text-anchor="middle" font-size="10" font-family="var(--mono)" style="fill:var(--ink-2)">SG₂</text>
+    <rect x="520" y="148" width="110" height="20" rx="6" style="fill:var(--surface); stroke:var(--gal)" stroke-width="1.6" stroke-dasharray="6 4"/>
+    <text x="575" y="162" text-anchor="middle" font-size="10" font-family="var(--mono)" style="fill:var(--ink-2)">SG₃</text>
+  </g>
+  <text x="742" y="162" font-size="10.5" style="fill:var(--ink-3)">each expiry &lt; G's</text>
+
+  <g stroke-width="1.4">
+    <line x1="230" y1="168" x2="230" y2="228" stroke="currentColor" marker-end="url(#aw3)"/>
+    <line x1="380" y1="168" x2="380" y2="228" stroke="currentColor" marker-end="url(#aw3)"/>
+    <line x1="575" y1="168" x2="575" y2="228" stroke="currentColor" marker-end="url(#aw3)"/>
+  </g>
+  <text x="452" y="196" font-size="10" font-family="var(--mono)" style="fill:var(--ink-3)">BrokeredCall</text>
+
+  <rect x="140" y="234" width="690" height="30" rx="6" style="fill:var(--band); stroke:var(--line-strong)" stroke-width="1.4"/>
+  <g style="stroke:var(--ink-2)" stroke-width="2">
+    <line x1="230" y1="240" x2="230" y2="258"/>
+    <line x1="380" y1="240" x2="380" y2="258"/>
+    <line x1="575" y1="240" x2="575" y2="258"/>
+  </g>
+  <text x="760" y="253" text-anchor="middle" font-size="10" font-family="var(--mono)" style="fill:var(--ink-3)">hash-chained →</text>
+
+  <line x1="380" y1="264" x2="380" y2="288" stroke="currentColor" stroke-width="1.2"/>
+  <rect x="196" y="292" width="370" height="26" rx="6" style="fill:var(--surface); stroke:var(--line-strong)" stroke-width="1.3"/>
+  <text x="381" y="309" text-anchor="middle" font-size="10.5" font-family="var(--mono)" style="fill:var(--ink)">delegationChain: [human, parent, SG₂] · broker-stamped</text>
+</svg>
+<figcaption><b>Lifetimes nest; the record outlives them all.</b> Every sub-agent bar sits strictly
+inside the parent grant's span, and every action lands on the tape with the full principal chain.
+When someone asks who authorized an action after the sub-agent is gone, the answer is the recorded
+chain.</figcaption>
+</figure>
+
+<div class="quote">
+  <p>A sub-agent action is attributed to its human principal, not laundered through the
+  sub-agent boundary.</p>
+  <cite>broker/sub-grants.md — the delegation chain and attribution</cite>
+</div>
+
+<div class="status">
+  <span class="tag">Status</span>
+  <p>Delegation is explicitly out of scope for GAL 0.2.x (§1.3; §8.3 names it unspecified in
+  this version). The model on this page is reference-implementation doctrine
+  (<code>broker/sub-grants.md</code> in the safe-agents working tree, with ancestry in ch. 41 of
+  the design corpus) and the candidate shape for a future spec revision. Enforcement sits in the
+  autonomy-ratchet tier of the build order and is not yet live in the reference implementation.</p>
+</div>
+
+<footer>
+  <span class="note">Grant, level, envelope and audit vocabulary as in GAL-SPEC.md (this
+    repository). safe-agents is the reference implementation. Siblings:
+    <a href="index.html">trust bricks</a> · <a href="data-flow.html">data flow</a> ·
+    <a href="standards.html">standards landscape</a>.</span>
+  <span>Compiled 2026-08-13</span>
+</footer>
+
+</div>
+
+<script>
+  var root=document.documentElement, tb=document.getElementById('tg');
+  function cur(){ if(root.dataset.theme) return root.dataset.theme;
+    return matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'; }
+  tb.addEventListener('click',function(){ root.dataset.theme = cur()==='dark'?'light':'dark'; });
+</script>
+</body>
+</html>
