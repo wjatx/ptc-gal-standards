@@ -100,6 +100,10 @@ declined with a published record, the conceptual ancestry, and the two proposed 
 broker-computed, strictly-attenuating sub-grants with full-chain attribution. Delegation is out of
 scope for GAL 0.2.x (§1.3), so that page documents reference-implementation doctrine and a
 candidate seam for a future revision, and says so on the page.
+[`mesh.html`](mesh.html) shows the agent-to-agent shape: every edge is the sender's broker talking
+to the receiver's airlock, and a mesh is that one edge repeated with nothing in the center. Its
+companion prose document is [`broker-airlock-mesh.md`](broker-airlock-mesh.md) (a copy, like the
+brief; canonical in the safe-agents working tree).
 
 The HTML pages are also published (publicly) on GitHub Pages, for presenting without a clone:
 
@@ -107,13 +111,14 @@ The HTML pages are also published (publicly) on GitHub Pages, for presenting wit
 - PTC & GAL data flow: https://wjatx.github.io/trust-bricks/data-flow.html
 - Standards landscape: https://wjatx.github.io/trust-bricks/standards.html
 - Sub-grant delegation: https://wjatx.github.io/trust-bricks/sub-grants.html
+- Broker-to-airlock mesh: https://wjatx.github.io/trust-bricks/mesh.html
 
 **Sync discipline.** Every other location is a deploy target or a pointer, never an editing
 surface: the Pages repo (`wjatx/trust-bricks`) carries byte-identical copies
 (`trust-bricks.html` → `index.html`, `data-flow.html` → `data-flow.html`), and the old claude.ai
 artifacts are stubs pointing at the Pages URLs. The file mapping is `trust-bricks.html` →
 `index.html`, `data-flow.html` → `data-flow.html`, `standards.html` → `standards.html`,
-`sub-grants.html` → `sub-grants.html`. To
+`sub-grants.html` → `sub-grants.html`, `mesh.html` → `mesh.html`. To
 update a diagram: edit it HERE, copy into the Pages repo, push both. Never edit a copy in place.
 
 ---
