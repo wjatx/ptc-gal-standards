@@ -289,7 +289,7 @@ Non-normative example:
   "demotionReason": null,
   "labelLatency": "P3D",
   "certifiedUntil": null,
-  "ownerId": "owner:wes"
+  "ownerId": "owner:operations"
 }
 ```
 

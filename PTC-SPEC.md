@@ -271,7 +271,7 @@ hands the stamped envelope to the worker.
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `zone` | string | yes | The agent/airlock zone that appended this entry. |
-| `source` | string | yes | Namespaced source id, `{scheme}:{value}` (e.g. `"email:robinhood.com"`, `"channel:telegram"`, `"peer:email-agent"`, `"connector:{tool}.{op}"`). |
+| `source` | string | yes | Namespaced source id, `{scheme}:{value}` (e.g. `"email:vendor.example.com"`, `"channel:telegram"`, `"peer:email-agent"`, `"connector:{tool}.{op}"`). |
 | `evidence` | string[] | yes | The authenticity checks this zone performed for this hop. |
 | `label` | enum §3.4 | yes | This zone's judgment of ITS OWN source under ITS OWN trust map. |
 | `ts` | string | yes | ISO-8601 UTC. |
@@ -302,20 +302,23 @@ broker, never model-supplied.
 
 ### 5.6 Example
 
-A signed trade-signal envelope as received, before the receiver's own hop is stamped:
+An envelope carrying a supplier invoice for payment approval, as received, before the receiver's
+own hop is stamped. The scenario is deliberately consequential: the action the payload invites
+(releasing a payment) is worth more than the effort of forging the email that carried it, which is
+the case taint exists for.
 
 ```json
 {
   "schema_version": 1,
-  "event_id": "conf-8842-a1",
-  "principal": "trading-agent",
+  "event_id": "inv-8842-a1",
+  "principal": "example-agent",
   "sender": { "channel_type": "webhook", "channel_identity": "peer:email-agent",
               "evidence": ["hmac:pass"] },
-  "payload": { "symbol": "RBH", "signal": "sell", "confidence": 0.72 },
+  "payload": { "invoice_ref": "INV-4471", "action": "approve_payment", "amount": "12400.00" },
   "payload_digest": "sha256:9f2c…",
   "payload_ref": "artifact://email-agent/raw/8842",
   "provenance": [
-    { "zone": "email-agent", "source": "email:robinhood.com", "evidence": ["dkim:pass"],
+    { "zone": "email-agent", "source": "email:vendor.example.com", "evidence": ["dkim:pass"],
       "label": "untrusted", "ts": "2026-07-24T14:03:01Z" },
     { "zone": "email-agent", "source": "peer:email-agent", "evidence": [],
       "label": "untrusted", "ts": "2026-07-24T14:03:02Z" }
@@ -331,8 +334,10 @@ A signed trade-signal envelope as received, before the receiver's own hop is sta
 ```
 
 The envelope is tainted (an `untrusted` entry exists) and non-strippably so — nothing the sender
-did after reading the email removed the entry; `sender_class` is null because only the receiver
-may set it.
+did after reading the email removed the entry. Note what `dkim:pass` does and does not buy: the
+mail was genuinely sent by the domain it claims, and the content is still untrusted, because
+authenticity of a sender is not trustworthiness of content. `sender_class` is null because only the
+receiver may set it.
 
 ## 6. Normative behavior
 
