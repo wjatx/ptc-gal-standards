@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | `0.2.3-draft` |
+| **Version** | `0.2.4-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
 | **Date** | 2026-09-19 |
 | **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
@@ -749,6 +749,29 @@ recorded operator override MAY permit an unsigned record in bootstrap circumstan
 record then verifiably carries its unsigned status and audit disposition (§6.11) applies. An
 OPTIONAL transparency-log anchor for high-blast promotions is a knob shipping OFF.
 
+**Signing authority is scoped by record type, and the scoping is what makes §6.7.2 hold.**
+Records that raise or re-license authority (`promotion`, `bootstrap`, `tightening`) MUST be
+signed by the issuer's key. Records the automatic evaluator writes (`demotion`, `lapse`) MUST
+be signed by a separate evaluator key, and no identity may hold both. Satisfying "every record
+is signed" by giving the evaluator the issuer's key would let the side that runs with no human
+and no model mint a promotion, which is the boundary §6.7.2 exists to draw; the requirement to
+sign everything and the requirement to separate the identities are only jointly satisfiable
+through two keys.
+
+A verifier MUST select the acceptable key set from the record's type, and MUST refuse a record
+signed by the other role's key. A key resolvable under both roles is a configuration error and
+MUST fail closed rather than resolve in either direction: a key that can sign anything is the
+single key this clause forbids, arriving by configuration instead of by design.
+
+**Adopting signing over existing history.** A deployment that adopts record signing after
+records exist holds history that cannot be re-signed. The exemption MUST be an explicit,
+recorded instant: records from that instant on are subject to the requirement in full, earlier
+records are exempt, and the audit MUST report the exemption and its extent rather than passing
+silently (§6.11's green-with-annotations discipline). An exemption instant that is not yet in
+force MUST be reported as a finding, since it exempts every record ever written while reading
+as coverage. The instant against which it is judged is an explicit input, never derived from the
+records under audit (the rule §6.7.6 states for terms).
+
 The signing shape is shared with the sibling PTC specification (its signing-shape /
 trust-context-envelope sections): same envelope discipline, same workload-identity key
 handling, a second statement type on the same machinery. Grant integrity at rest (§6.9) and
@@ -842,7 +865,7 @@ predicate, enforces maker≠checker, signs the ledger record, writes the grant s
 **grant enforcer** — the broker — reads the grant per call, enforces the level's actuation
 semantics, runs the demotion evaluation, and structurally cannot be written past by the agent.
 One deployment component MAY implement both roles, but the agent MUST be neither. Audit
-clauses (GAL-31 to GAL-33 and GAL-35) constrain the artifacts both roles produce and MUST be
+clauses (GAL-31 to GAL-33, GAL-35, GAL-37 and GAL-38) constrain the artifacts both roles produce and MUST be
 satisfiable by a third party holding read-only access.
 
 ### 7.2 Issuer clauses
@@ -889,6 +912,8 @@ satisfiable by a third party holding read-only access.
 - **GAL-31** An independent, read-only party SHALL be able to re-verify the full ledger: signatures, transition validity, envelope binding, and the no-orphan invariant.
 - **GAL-32** Audit findings SHALL be dispositioned only by signed, append-only acknowledgment artifacts binding rule + coordinate + violation digest; the waivable vocabulary SHALL be closed, integrity-tamper findings SHALL be un-waivable, and an unverifiable waiver SHALL NOT be applied.
 - **GAL-33** Each armed demotion trigger SHALL have been drilled against a live grant before being relied upon, and a promotion SHALL NOT be considered complete until the promoted grant has acted once. **The first act under a promoted grant SHALL be recoverable from the audit record** (the join from audit record to promotion: not yet implemented — #378) by a read-only party — the enforcement point writes it, and the ceremony ledger cannot, since the enforcing component is barred from writing the grant store.
+- **GAL-37** Ledger records SHALL be signed under the role their record type names (the issuer's key for `promotion`, `bootstrap` and `tightening`, a separate evaluator key for `demotion` and `lapse`), and no identity SHALL hold both roles' signing keys. A verifier SHALL select the acceptable keys from the record type, SHALL refuse a record signed by the other role's key, and SHALL refuse a key resolvable under both.
+- **GAL-38** Where record signing is adopted over existing history, the exemption SHALL be an explicit recorded instant judged against an explicit evaluation instant, its extent SHALL be reported rather than passed silently, and an exemption instant not yet in force SHALL be a finding.
 - **GAL-35** An auditor SHALL be able to reconcile the grant set against the live principal set in both directions — principals acting without a grant, and grants whose principal no longer exists — and SHALL report rather than write; retiring a grant remains a ceremony.
 
   > **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #256).
@@ -933,6 +958,8 @@ satisfiable by a third party holding read-only access.
 | GAL-34 | Five Eyes *Careful adoption of agentic AI services* (2026-05-01), the "expiry timers and recorded grant chains" pairing; `docs/references/five-eyes-agentic-guidance.md` FE-1. The evaluation-instant sentence answers an implementer finding against the IETF WIMSE cross-org delegation draft (finding 4, expired authority kept alive through quiet periods). |
 | GAL-35 | Five Eyes *Careful adoption of agentic AI services*, "periodically reconcile the registry against the live set of agents"; `docs/references/five-eyes-agentic-guidance.md` FE-2. Normative ahead of the reference implementation (§3; tracking #256). |
 | GAL-36 | GAL §4.1; reference implementation `broker/runtime/pep.py` (`_owns_intent`, the full-principal ownership check) and `approval/`; an implementer finding against the IETF WIMSE cross-org delegation draft (approvals burned by a third party citing their identifier). |
+| GAL-37 | GAL §6.10 (this revision); §6.7.2's separate evaluator identity read together with §6.10's sign-everything requirement. Reference implementation `broker/grants/record_signing.py` (`RECORD_TYPE_SIGNING_ROLE`, `verify_record_by_type`) and the IAM namespace split in `infra/lib/identity-stack.ts`. |
+| GAL-38 | GAL §6.10 (this revision); the epoch-cut convention for a ledger that cannot be re-minted, reference implementation `RECORD_SIGNING_EPOCH`. |
 
 ### 7.6 Implementation Conformance Statement
 
@@ -1079,6 +1106,7 @@ nothing.
 | `0.2.1-draft` | 2026-07-29 | Introduces the **implementation-status marker** (§3) and applies it to the two clauses that are normative ahead of the reference implementation — GAL-34 / §6.7.6 (the lapse arc, tracking #255) and GAL-35 / §6.11 (two-direction reconciliation, tracking #256) — so no reader can mistake either for a shipped control. Records the shipped `attestation` field on `PromotionRecord` (§5.2), which states when one operator held both ceremony roles and so keeps §6.10's non-repudiation claim honest. Pins the canonical JSON encoding for all GAL objects (§3), previously deferred despite §6.9's stored-bytes integrity basis making it interoperability-critical. Resolves the `evidence` reference format as an opaque, integrity-bound, implementation-defined string (§5.1, §5.2) and pins the `CorroborationRecord` field set (§5.3), including the deliberate exclusion of per-source provenance. Adds the audit's honest limit (§6.11): it verifies signatures, never the cited evidence. Corrects §4.3/§5.2, which said "four record types" over a five-row table. |
 | `0.2.2-draft` | 2026-08-03 | Corrects §8.1 (Evidence poisoning), whose mitigation direction and normative SHOULD were both keyed on taint while the attack they name does not require it (#342). Grooming a promotion needs no tainted turn: a patient adversary, or drift with no adversary, can produce a clean behavioral record that the predicate rewards, leaving a taint-aware evidence window nothing to weight. §8.1 now separates tainted from untainted grooming, keeps the existing taint-aware guidance scoped to the first, adds a MUST NOT against reading absence of taint as absence of grooming, and states the structural asymmetry that motivates both: taint is a ratchet and cannot be farmed, whereas an evidence window rewarding accumulated clean behavior is a credit mechanism whose state the subject improves through its own conduct. Names maker≠checker ratification (§6.4), not the predicate, as what bounds the untainted case, and directs ratifiers to read a clean window as absence of recorded trouble rather than as positive evidence of trustworthiness. No clause, schema, or wire change; §8.1 carries no conformance clause. |
 | `0.2.3-draft` | 2026-09-19 | The lapse arc is implemented: removes the NOT YET IMPLEMENTED markers from §4.3, §5.1, §6.7.6 and GAL-34. §6.7.6 and GAL-34 gain the **evaluation instant** (explicit, never derived from records), enforcement at the lower of level and `lastSafeLevel` from the boundary without waiting for the record, and the after-lapse rules. §5.2 adds `lapse` to `recordType` and the ratified `certifiedUntil` to promotion records, and fixes `demotionReason`'s type scope, which contradicted §4.3's lapse row. §3 pins that a null optional field is omitted from the canonical form; `Grant.certifiedUntil` becomes optional accordingly. §4.1 and new clause GAL-36 make in-loop approval consumption keyed on the bound call and the whole principal. §6.11 makes an unexplained level drop, and a term that differs from the ratified one, audit findings. §1.2 adds delegation path resolution and token-conveyed authority as non-goals. The evaluation-instant rule, GAL-36 and the delegation non-goal respond to implementer findings against the IETF WIMSE cross-org delegation draft. |
+| `0.2.4-draft` | 2026-09-19 | Scopes signing authority by record type in §6.10, with clauses GAL-37 and GAL-38. §6.10 had required every ledger record to be signed while §6.7.2 required the automatic evaluator to be a separate identity, and the reference implementation signed only promotions. The two requirements are jointly satisfiable only through two keys: an issuer key for the records that raise or re-license authority and a separate evaluator key for demotion and lapse, with verification selecting the acceptable keys from the record type and refusing a key resolvable under both. §6.10 also states how a deployment adopts signing over history it cannot re-sign: an explicit recorded instant, its extent reported rather than passed silently, and an instant not yet in force reported as a finding. |
 
 ### 10.2 Reference implementation
 
