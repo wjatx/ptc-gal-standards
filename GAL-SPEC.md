@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| **Version** | `0.2.2-draft` |
+| **Version** | `0.2.3-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
-| **Date** | 2026-08-03 |
+| **Date** | 2026-09-19 |
 | **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
 | **Author** | Wes Jackson (Red Hat) |
 | **Copyright** | © 2026 Red Hat, Inc. |
@@ -50,6 +50,15 @@ provenance-maturity ceiling on acting rungs (§6.13).
   gate is out of scope; the sibling PTC specification records the evaluated-and-declined
   decision on general-purpose policy languages (a differential spike over the full reachable
   input space of the reference gate), and GAL's promotion predicate inherits that decision.
+- **Delegation path resolution.** GAL checks a grant at the enforcement point; it does not
+  resolve delegation paths. Where several delegation paths reach the same agent, path
+  resolution and per-path fail-closed semantics belong to the delegation mechanism.
+- **Conveying authority in a token.** GAL stores authority in the grant store, changed only
+  through signed ledger records (§6.10), rather than conveying it in a delegation token; the
+  sibling PTC specification's signed envelope conveys what a receiver needs to verify provenance
+  offline. Deployments that need thresholds to travel with the delegation are served by
+  delegation specifications, and the two compose: GAL governs the grant lifecycle, the
+  delegation chain governs conveyance.
 
 ### 1.3 Future extensions (out of scope for this version)
 
@@ -157,6 +166,11 @@ where the two disagree on a construct, an implementation MUST state which it emi
 transport MAY re-encode an object in flight, but a verifier MUST verify the stored bytes
 verbatim and MUST NOT re-serialize before verifying (§6.9).
 
+A field that is optional in its field table (Required "no") is **omitted** from the canonical
+form when its value is null, never emitted as `null`. Schema growth therefore never changes the
+bytes of an object that does not use the new field, and integrity indicts tampering rather than
+evolution.
+
 *Reference implementation note (non-normative):* the reference implementation emits this
 profile for its signed ledger records, and its grant payload does not yet emit the compact
 form; that divergence is being corrected.
@@ -182,6 +196,14 @@ staged action at all; in-loop produces a staged intent that a human releases. Th
 promotion (Recommend → in-loop) is therefore the *creation* of the grant, through the same
 recorded ceremony as every later climb.
 
+An in-loop approval is single-use authority, and a single-use resource can be spent by someone
+other than its holder. Consumption of an approval MUST be keyed on the approval's own bound
+action, the frozen call the human was shown, and MUST NOT be inferred from the approval's
+identifier appearing in any execution record; otherwise any party able to write a record can
+burn another party's approval without using it. Only the principal the call was frozen for
+(the whole identity tuple of §5.1, never the agent identity alone) may release, reject or
+otherwise transition it, and the release executes the stored call and nothing re-sent.
+
 ### 4.2 Demotion triggers (closed set)
 
 Exactly four deterministic conditions may trip automatic demotion. The set is closed in this
@@ -204,12 +226,9 @@ Five record types share one append-only ceremony ledger (§5.2).
 | `demotion` | Automatic deterministic demotion | `ratifiedBy` is the system demotion-evaluator identity; `triggeredBy` non-empty; `demotionReason` set; `predicate` null |
 | `bootstrap` | The sanctioned seed: first creation of a grant outside the propose/ratify ceremony | `fromLevel` null; maker ≠ checker NOT enforced (single-operator seed is sanctioned); `predicate` null; `triggeredBy` empty; `demotionReason` null |
 | `tightening` | Voluntary any-level → `in-loop` move (§6.3) | `toLevel` = `"in-loop"`; maker ≠ checker NOT enforced; `predicate` null; `triggeredBy` empty; `demotionReason` null |
-| `lapse` *(not yet implemented — #255)* | A certification term expired (§6.7.6) | `toLevel` = the grant's `lastSafeLevel`; `ratifiedBy` is the system evaluator identity; `triggeredBy` empty — a lapse is an absence, not a fired condition; `demotionReason` = `"pending-evidence"`; `predicate` null |
+| `lapse` | A certification term expired (§6.7.6) | `toLevel` = the grant's `lastSafeLevel`; `ratifiedBy` is the system evaluator identity; `triggeredBy` empty — a lapse is an absence, not a fired condition; `demotionReason` = `"pending-evidence"`; `predicate` null |
 
-> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #255).
-
-The `lapse` row above, and only that row, is normative ahead of the reference implementation
-(§3, §6.7.6). The other four record types are implemented.
+All five record types are implemented.
 
 The schema enforces field *shape* only; transition validity (level ordering, constructibility)
 is the state machine's obligation (§6.2, GAL-17).
@@ -261,10 +280,8 @@ constant; this record is where it lives and what the lifecycle moves on a ratche
 | `demotionTriggers` | DemotionTrigger[] | yes | The deterministic conditions armed for this grant, drawn from the closed §4.2 vocabulary. |
 | `demotionReason` | null \| `"failing"` \| `"pending-evidence"` | yes | Why currently demoted; null when at full level. |
 | `labelLatency` | string (duration) | yes | How long until an action of this class yields ground truth. Caps re-promotion speed (§6.8, §8.2). *Reference implementation note:* validated as an ISO-8601 duration; calendar-ambiguous year/month units are refused. |
-| `certifiedUntil` *(not yet implemented — #255)* | string (ISO-8601 UTC) \| null | yes | The term of the current certification: the instant after which this level is no longer certified and the grant lapses (§6.7.6). `null` means no term. |
+| `certifiedUntil` | string (ISO-8601 UTC) \| null | no | The term of the current certification: the instant at and after which this level is no longer certified and the grant lapses (§6.7.6). Null, or absent, means no term; omitted from the canonical form when null (§3). |
 | `ownerId` | string | yes | The named human owner accountable for this grant. Every grant has one. |
-
-> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #255). Applies to `certifiedUntil` only; every other field of `Grant` is implemented.
 
 The grant record carries **no integrity field of its own**. Integrity binds the record's stored
 bytes from outside the record (§6.9): a hash carried *inside* the structure it protects cannot
@@ -301,7 +318,7 @@ recorded, never approved.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `recordType` | `"promotion"` \| `"demotion"` \| `"bootstrap"` \| `"tightening"` | yes | The record type; default `"promotion"`. Shape rules per §4.3. |
+| `recordType` | `"promotion"` \| `"demotion"` \| `"bootstrap"` \| `"tightening"` \| `"lapse"` | yes | The record type; default `"promotion"`. Shape rules per §4.3. |
 | `actionClass` | string | yes | The class whose level changed. |
 | `principal` | Principal | yes | For whom. |
 | `fromLevel` | level \| null | yes | `null` means the Recommend rung: the agent held no grant, and this record's write is the grant's creation (first promotion or bootstrap). |
@@ -309,11 +326,12 @@ recorded, never approved.
 | `evidence` | string | yes | An implementation-defined reference, opaque to GAL, on the same terms as `Grant.evidence` (§5.1) — but what it references varies by record type; see below. |
 | `predicate` | string \| null | promotion-typed only | The signed promotion predicate authored in advance (the licensing text/result). REQUIRED non-empty on `promotion` records; null otherwise. |
 | `proposedBy` | string | yes | Maker identity. |
-| `ratifiedBy` | string | yes | Checker identity. On `promotion` records MUST differ from `proposedBy` (§6.4.3). On `demotion` records, the system demotion-evaluator identity. |
+| `ratifiedBy` | string | yes | Checker identity. On `promotion` records MUST differ from `proposedBy` (§6.4.3). On `demotion` and `lapse` records, the system demotion-evaluator identity. |
 | `attestation` | enum \| null | no | **How the two ceremony identities were established**, from a closed vocabulary whose one defined value is `"solo-local"`: ONE operator held both ceremony roles, through two credentials that the same holder could mint. Null — including its absence from any record written before the field existed — means the two identities were established by mutually unmintable credentials, the full maker≠checker guarantee of §6.4.3. The value MUST be **derived** by the issuer from the ceremony identities themselves, never independently asserted by the proposer, so the marker and the identities cannot disagree. This field is what keeps §6.10's non-repudiation claim honest: the record must never imply a review that did not happen, so a record written under the weaker guarantee states it rather than leaving an auditor to assume the stronger one. |
 | `envelopeHash` | string | yes | The envelope hash in force when the record was written; bound into the signed statement (§6.10). |
 | `triggeredBy` | string[] | demotion-typed only | The DemotionTrigger values that fired. Non-empty on `demotion` records; empty otherwise. |
-| `demotionReason` | `"failing"` \| `"pending-evidence"` \| null | demotion-typed only | Set on `demotion` records; null otherwise. |
+| `demotionReason` | `"failing"` \| `"pending-evidence"` \| null | demotion- and lapse-typed only | Set on `demotion` records; `"pending-evidence"` on `lapse` records (§4.3); null otherwise. |
+| `certifiedUntil` | string (ISO-8601 UTC) \| null | no | The certification term the checker ratified, on `promotion` records only; MUST be null on every other type, and omitted from the canonical form when null (§3). Binding the term into the signed record is what makes it part of what the checker is accountable for (§6.10). |
 | `ts` | string (ISO-8601 UTC) | yes | Record timestamp. |
 
 **What `evidence` carries, per record type.** GAL deliberately does **not** require `evidence`
@@ -628,8 +646,6 @@ whether a bound blew.
 
 #### 6.7.6 Lapse — a certification has a term
 
-> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #255).
-
 Every trigger in §4.2 asserts that something was **observed**: a bound blew, a quorum failed, a
 distribution drifted, an owner flagged. None of them fires when *nothing happens*. A grant promoted
 on evidence gathered long ago, whose agent has since been idle, therefore has no path downward — it
@@ -656,6 +672,26 @@ A grant MAY carry a term (`certifiedUntil`, §5.1). Where it does:
   place; either would make the term self-certifying and thereby vacuous.
 - A grant with no term does not lapse. Terms are a deployment knob and ship unset (§9.2): a
   deployment that sets none behaves exactly as it did before this arc existed.
+
+**The evaluation instant.** Whether a term has passed is judged against an explicit instant
+supplied to the evaluation, and a term has passed when that instant is at or after
+`certifiedUntil`. The instant MUST NOT be derived from the timestamps of the records under
+evaluation: not the grant's `ts`, not the latest ledger record, not the audit tape. Deriving it
+from records reintroduces the failure this section exists to close, since an idle grant produces
+no records and its "now" would stand still.
+
+**Enforcement does not wait for the record.** From the instant its term passes, a grant MUST be
+enforced at the lower of its stored level and `lastSafeLevel`, whether or not the `lapse` record
+has yet been written. The record is the durable account of the transition; the enforcer's
+obligation starts at the boundary. The lower of the two, rather than `lastSafeLevel` outright,
+because a lapse never raises a level.
+
+**After a lapse.** The lapse writer is idempotent: a grant whose stored level is already at or
+below `lastSafeLevel` owes no lapse record. A lapse leaves `certifiedUntil` and `lastSafeLevel`
+unchanged. A promotion MUST NOT be built on a grant whose term has passed while its lapse is
+unwritten, since it would either raise authority past an expired certification or leave a level
+change the ledger cannot explain. The term is set only by the promotion ceremony, carried on the
+`promotion` record the checker ratified (§5.2); no other write path may lengthen or remove it.
 
 Grant age is deliberately distinct from the two decay concepts already in this specification.
 `stale_confidence` (§4.2) fires when an observed distribution drifts, voiding a calibration; dwell
@@ -724,7 +760,11 @@ of the change.
 An independent auditor — read-only, holding no ceremony credentials — MUST be able to
 re-verify the entire ledger: every grant has a ledger counterpart from birth (§6.12), every
 record's signature verifies, every transition is structurally valid, every grant's
-`envelopeHash` matches an in-force envelope, and no record has been mutated or removed.
+`envelopeHash` matches an in-force envelope, and no record has been mutated or removed. A grant
+whose stored level is below the level its ledger derives, with no record explaining the drop, is
+a finding: a write that bypassed the ledger fails toward less authority, and is still a write
+that bypassed the ledger. So is a grant whose `certifiedUntil` differs from the term on the
+promotion record that raised it to its current level.
 
 **What the audit does not do.** The obligation stops at the ledger. Because `evidence` is an
 opaque, implementation-defined reference (§5.1, §5.2), an auditor verifies that the reference
@@ -841,9 +881,8 @@ satisfiable by a third party holding read-only access.
 - **GAL-29** Re-promotion SHALL require fresh recalibration evidence and satisfy dwell-time hysteresis (the hysteresis gate on the promotion path: not yet implemented — #377); demotion SHALL have no dwell.
 - **GAL-30** A grant's integrity value SHALL bind its **stored bytes**, SHALL live outside the record it protects, and SHALL be verified verbatim *before* the bytes are parsed. A grant failing verification, or carrying an `envelopeHash` not in force, SHALL be quarantined loudly on every call — treated as no grant, with an audit-visible signal distinguishable from not-found.
 
-- **GAL-34** Where a grant carries a certification term, its expiry SHALL lapse the grant to `lastSafeLevel` with `demotionReason` `"pending-evidence"` and a `lapse`-typed record; a lapse SHALL NOT be recorded as a triggered demotion, SHALL NOT revoke authority outright, and SHALL NOT be auto-renewed or extended in place by the holder. A grant carrying no term SHALL NOT lapse.
-
-  > **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #255).
+- **GAL-34** Where a grant carries a certification term, its expiry SHALL lapse the grant to `lastSafeLevel` with `demotionReason` `"pending-evidence"` and a `lapse`-typed record; a lapse SHALL NOT be recorded as a triggered demotion, SHALL NOT revoke authority outright, and SHALL NOT be auto-renewed or extended in place by the holder. A grant carrying no term SHALL NOT lapse. Term expiry SHALL be judged against an explicit evaluation instant, never one derived from the timestamps of the records under evaluation, and from that instant the grant SHALL be enforced at the lower of its level and `lastSafeLevel` whether or not the lapse record has been written.
+- **GAL-36** An in-loop approval SHALL be consumed only by release or rejection of the frozen call it binds, by the principal (the whole identity tuple) the call was frozen for; consumption SHALL NOT be inferred from the approval's identifier appearing in any record, and the release SHALL execute the stored call and nothing re-sent.
 
 ### 7.4 Audit clauses
 
@@ -891,8 +930,9 @@ satisfiable by a third party holding read-only access.
 | GAL-31 | GAL.md §11 (grant-integrity audit); grant-lifecycle §"audit instrument" |
 | GAL-32 | grant-lifecycle §"audit instrument" (#196 acknowledgment ceremony) |
 | GAL-33 | grant-lifecycle §"This must be drilled"; lessons doctrine ("a promotion is not done until the promoted grant acts once") |
-| GAL-34 | Five Eyes *Careful adoption of agentic AI services* (2026-05-01), the "expiry timers and recorded grant chains" pairing; `docs/references/five-eyes-agentic-guidance.md` FE-1. Normative ahead of the reference implementation (§3; tracking #255). |
+| GAL-34 | Five Eyes *Careful adoption of agentic AI services* (2026-05-01), the "expiry timers and recorded grant chains" pairing; `docs/references/five-eyes-agentic-guidance.md` FE-1. The evaluation-instant sentence answers an implementer finding against the IETF WIMSE cross-org delegation draft (finding 4, expired authority kept alive through quiet periods). |
 | GAL-35 | Five Eyes *Careful adoption of agentic AI services*, "periodically reconcile the registry against the live set of agents"; `docs/references/five-eyes-agentic-guidance.md` FE-2. Normative ahead of the reference implementation (§3; tracking #256). |
+| GAL-36 | GAL §4.1; reference implementation `broker/runtime/pep.py` (`_owns_intent`, the full-principal ownership check) and `approval/`; an implementer finding against the IETF WIMSE cross-org delegation draft (approvals burned by a third party citing their identifier). |
 
 ### 7.6 Implementation Conformance Statement
 
@@ -1038,6 +1078,7 @@ nothing.
 | `0.2.0-draft` | 2026-07-25 | Adds the time-based **lapse** arc (§6.7.6, `certifiedUntil`, the `lapse` record type, GAL-34): a certification has a term, and its expiry is deliberately *not* a fifth demotion trigger, since a lapse asserts an absence rather than an observation. Adds reconciliation of the grant set against the live principal set in both directions (§6.11, GAL-35) — the shadow-agent case no store-only check can see. Corrects §5.1: the grant carries no integrity field of its own, and §6.9/GAL-30 now state the stored-bytes basis (a hash inside the structure it protects cannot cover the bytes as stored) plus the rule that integrity must indict tampering, never schema evolution. |
 | `0.2.1-draft` | 2026-07-29 | Introduces the **implementation-status marker** (§3) and applies it to the two clauses that are normative ahead of the reference implementation — GAL-34 / §6.7.6 (the lapse arc, tracking #255) and GAL-35 / §6.11 (two-direction reconciliation, tracking #256) — so no reader can mistake either for a shipped control. Records the shipped `attestation` field on `PromotionRecord` (§5.2), which states when one operator held both ceremony roles and so keeps §6.10's non-repudiation claim honest. Pins the canonical JSON encoding for all GAL objects (§3), previously deferred despite §6.9's stored-bytes integrity basis making it interoperability-critical. Resolves the `evidence` reference format as an opaque, integrity-bound, implementation-defined string (§5.1, §5.2) and pins the `CorroborationRecord` field set (§5.3), including the deliberate exclusion of per-source provenance. Adds the audit's honest limit (§6.11): it verifies signatures, never the cited evidence. Corrects §4.3/§5.2, which said "four record types" over a five-row table. |
 | `0.2.2-draft` | 2026-08-03 | Corrects §8.1 (Evidence poisoning), whose mitigation direction and normative SHOULD were both keyed on taint while the attack they name does not require it (#342). Grooming a promotion needs no tainted turn: a patient adversary, or drift with no adversary, can produce a clean behavioral record that the predicate rewards, leaving a taint-aware evidence window nothing to weight. §8.1 now separates tainted from untainted grooming, keeps the existing taint-aware guidance scoped to the first, adds a MUST NOT against reading absence of taint as absence of grooming, and states the structural asymmetry that motivates both: taint is a ratchet and cannot be farmed, whereas an evidence window rewarding accumulated clean behavior is a credit mechanism whose state the subject improves through its own conduct. Names maker≠checker ratification (§6.4), not the predicate, as what bounds the untainted case, and directs ratifiers to read a clean window as absence of recorded trouble rather than as positive evidence of trustworthiness. No clause, schema, or wire change; §8.1 carries no conformance clause. |
+| `0.2.3-draft` | 2026-09-19 | The lapse arc is implemented: removes the NOT YET IMPLEMENTED markers from §4.3, §5.1, §6.7.6 and GAL-34. §6.7.6 and GAL-34 gain the **evaluation instant** (explicit, never derived from records), enforcement at the lower of level and `lastSafeLevel` from the boundary without waiting for the record, and the after-lapse rules. §5.2 adds `lapse` to `recordType` and the ratified `certifiedUntil` to promotion records, and fixes `demotionReason`'s type scope, which contradicted §4.3's lapse row. §3 pins that a null optional field is omitted from the canonical form; `Grant.certifiedUntil` becomes optional accordingly. §4.1 and new clause GAL-36 make in-loop approval consumption keyed on the bound call and the whole principal. §6.11 makes an unexplained level drop, and a term that differs from the ratified one, audit findings. §1.2 adds delegation path resolution and token-conveyed authority as non-goals. The evaluation-instant rule, GAL-36 and the delegation non-goal respond to implementer findings against the IETF WIMSE cross-org delegation draft. |
 
 ### 10.2 Reference implementation
 

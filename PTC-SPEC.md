@@ -1,7 +1,7 @@
 # PTC — Provenance & Trust Context, Specification
 
-**Version:** 0.2.3-draft
-**Date:** 2026-08-06
+**Version:** 0.2.4-draft
+**Date:** 2026-09-19
 **Status:** Draft for Linux Foundation agent-standards discussion. Wire schemas may change before
 1.0; see Open Problems and Future Extensions.
 **Working group:** LF Edge + Agentic AI Foundation (AAIF)
@@ -443,7 +443,10 @@ own trust map.
   `sender.channel_identity`. Binding both halves of the dedupe key means
   an exact replay dedupes, and ANY mutation — to `event_id` or the sender identity — breaks the
   signature and classifies as forgery, attributed to transport only, never the impersonated
-  signer.
+  signer. The `principal` is bound for a second reason: a receiver that does not share the
+  sender's log cannot recover the on-behalf-of principal from the chain, so a statement that
+  omitted it would authenticate an action without saying whom it was taken for. This is the
+  distinction OAuth 2.0 Token Exchange (RFC 8693) draws between its `sub` and `act` claims.
 - **Identifiers.** The DSSE `payloadType` MUST be `application/vnd.in-toto+json`, and the
   statement's `_type` MUST be `https://in-toto.io/Statement/v1`. These are in-toto's own
   registered identifiers [IN-TOTO], adopted rather than minted: a PTC statement is an in-toto
@@ -877,6 +880,7 @@ minted at runtime**; carriage bindings, signature key substrates, transparency-l
 | 0.2.1-draft | 2026-07-29 | Resolves the signing-identifier question left open in §6.6, splitting it: the DSSE `payloadType` and statement `_type` are PINNED to in-toto's own registered identifiers (adopted, not minted), while `predicateType` is pinned by **shape** — absolute, explicitly versioned, one URI per statement kind — with the namespace left for the adopting standards body, since a vendor domain in a normative identifier makes conformance depend on one organization's DNS. Also states the document's discussion-only IPR posture and replaces version-relative scope language with "this version" / "this specification". |
 | 0.2.2-draft | 2026-08-06 | Resolved a contradiction in which PTC-25, §3.3's preamble and §6.8 required `transform` to produce an operation **plus** clamped arguments while §3.3's own verb table stated an "and/or" form, by softening all four to "and/or". Superseded within the day by 0.2.3-draft, which resolves the same contradiction in the other direction; recorded rather than removed, because the LF received 0.2.1-draft and the intervening revision is part of the record. |
 | 0.2.3-draft | 2026-08-06 | Resolves the `transform` contradiction 0.2.2-draft resolved the wrong way. The requirement is the **plus** form in all four places, including §3.3's verb table, and the argument-clamping half now carries the §3-style implementation-status marker (tracking #358) in each place a reader meets it. The earlier softening treated the specification as a description of the reference implementation; it is a description of the design, and the honest way to state a settled requirement the code has not reached is to mark it, not to weaken it. This also restores §6.8's polarity-seam argument, which turns on `transform` emitting *arguments* specifically and was materially weakened by the "and/or" form. Adopting the marker here makes PTC's convention identical to GAL's, where two clauses have carried it since 0.2.1-draft. |
+| 0.2.4-draft | 2026-09-19 | States why §6.6 binds `principal` into the signed statement: a receiver without the sender's log cannot recover the on-behalf-of principal from the chain (RFC 8693's `sub`/`act` distinction). Prompted by an implementer finding against the IETF WIMSE cross-org delegation draft. Rationale only; no clause, schema, or wire change. |
 
 ## 12. References
 
@@ -893,6 +897,8 @@ minted at runtime**; carriage bindings, signature key substrates, transparency-l
 - Biba, K. J., *Integrity Considerations for Secure Computer Systems* (1977) — the integrity
   lattice and no-write-up rule.
 - RFC 2119 / RFC 8174 — conformance keywords.
+- OAuth 2.0 Token Exchange (RFC 8693): its `sub`/`act` split between the on-behalf-of subject
+  and the acting party is the precedent for binding `principal` into the signed statement (§6.6).
 - SD-JWT-VC — reserved for the future selective-disclosure content drill-down (§1.3).
 
 **Design inputs**
