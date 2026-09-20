@@ -1,6 +1,6 @@
 # PTC — Provenance & Trust Context, Specification
 
-**Version:** 0.2.4-draft
+**Version:** 0.2.5-draft
 **Date:** 2026-09-19
 **Status:** Draft for Linux Foundation agent-standards discussion. Wire schemas may change before
 1.0; see Open Problems and Future Extensions.
@@ -881,6 +881,7 @@ minted at runtime**; carriage bindings, signature key substrates, transparency-l
 | 0.2.2-draft | 2026-08-06 | Resolved a contradiction in which PTC-25, §3.3's preamble and §6.8 required `transform` to produce an operation **plus** clamped arguments while §3.3's own verb table stated an "and/or" form, by softening all four to "and/or". Superseded within the day by 0.2.3-draft, which resolves the same contradiction in the other direction; recorded rather than removed, because the LF received 0.2.1-draft and the intervening revision is part of the record. |
 | 0.2.3-draft | 2026-08-06 | Resolves the `transform` contradiction 0.2.2-draft resolved the wrong way. The requirement is the **plus** form in all four places, including §3.3's verb table, and the argument-clamping half now carries the §3-style implementation-status marker (tracking #358) in each place a reader meets it. The earlier softening treated the specification as a description of the reference implementation; it is a description of the design, and the honest way to state a settled requirement the code has not reached is to mark it, not to weaken it. This also restores §6.8's polarity-seam argument, which turns on `transform` emitting *arguments* specifically and was materially weakened by the "and/or" form. Adopting the marker here makes PTC's convention identical to GAL's, where two clauses have carried it since 0.2.1-draft. |
 | 0.2.4-draft | 2026-09-19 | States why §6.6 binds `principal` into the signed statement: a receiver without the sender's log cannot recover the on-behalf-of principal from the chain (RFC 8693's `sub`/`act` distinction). Prompted by an implementer finding against the IETF WIMSE cross-org delegation draft. Rationale only; no clause, schema, or wire change. |
+| 0.2.5-draft | 2026-09-20 | Rewrites the Reference implementation entry to name the public implementation, [ptc-gal-reference](https://github.com/wjatx/ptc-gal-reference), which was not previously named anywhere in this document: the entry pointed at a private repository a reader cannot open. Replaces "running in production since July 2026" with what a reader can actually check — conformance suites runnable from a checkout with no cloud account — and relabels the forged-signer drill as recorded history rather than reproducible evidence. Non-normative entry; no clause, schema, or wire change. |
 
 ## 12. References
 
@@ -914,7 +915,9 @@ minted at runtime**; carriage bindings, signature key substrates, transparency-l
 
 **Reference implementation**
 
-- **safe-agents** — running in production since July 2026, with per-clause conformance suites for
-  every origin document in §8.3, adversarially drilled on live infrastructure (including the
-  forged-signer attribution drill behind PTC-39). The differential corpus from the
-  policy-language evaluation (§1.2) is retained as the seed of the gate conformance suite.
+- **[ptc-gal-reference](https://github.com/wjatx/ptc-gal-reference)** — per-clause conformance
+  suites for every origin document in §8.3, runnable from a checkout against these specifications
+  with no cloud account and no credential. The differential corpus from the policy-language
+  evaluation (§1.2) is retained as the seed of the gate conformance suite. The forged-signer
+  attribution drill behind PTC-39 was run against deployed infrastructure; that run is recorded
+  history rather than something a reader can reproduce.

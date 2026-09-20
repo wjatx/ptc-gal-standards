@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | `0.2.5-draft` |
+| **Version** | `0.2.6-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
 | **Date** | 2026-09-19 |
 | **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
@@ -108,7 +108,7 @@ all capitals.
 ## 3. Document conventions
 
 Normative text is implementation-agnostic. Non-normative callouts marked *Reference
-implementation note:* MAY name concrete technology (safe-agents; §10.2). Field tables pin
+implementation note:* MAY name concrete technology (ptc-gal-reference; §10.2). Field tables pin
 field names and abstract types.
 
 **Implementation status markers.** This specification is derived from a running reference
@@ -1116,18 +1116,29 @@ nothing.
 | `0.2.3-draft` | 2026-09-19 | The lapse arc is implemented: removes the NOT YET IMPLEMENTED markers from §4.3, §5.1, §6.7.6 and GAL-34. §6.7.6 and GAL-34 gain the **evaluation instant** (explicit, never derived from records), enforcement at the lower of level and `lastSafeLevel` from the boundary without waiting for the record, and the after-lapse rules. §5.2 adds `lapse` to `recordType` and the ratified `certifiedUntil` to promotion records, and fixes `demotionReason`'s type scope, which contradicted §4.3's lapse row. §3 pins that a null optional field is omitted from the canonical form; `Grant.certifiedUntil` becomes optional accordingly. §4.1 and new clause GAL-36 make in-loop approval consumption keyed on the bound call and the whole principal. §6.11 makes an unexplained level drop, and a term that differs from the ratified one, audit findings. §1.2 adds delegation path resolution and token-conveyed authority as non-goals. The evaluation-instant rule, GAL-36 and the delegation non-goal respond to implementer findings against the IETF WIMSE cross-org delegation draft. |
 | `0.2.4-draft` | 2026-09-19 | Scopes signing authority by record type in §6.10, with clauses GAL-37 and GAL-38. §6.10 had required every ledger record to be signed while §6.7.2 required the automatic evaluator to be a separate identity, and the reference implementation signed only promotions. The two requirements are jointly satisfiable only through two keys: an issuer key for the records that raise or re-license authority and a separate evaluator key for demotion and lapse, with verification selecting the acceptable keys from the record type and refusing a key resolvable under both. §6.10 also states how a deployment adopts signing over history it cannot re-sign: an explicit recorded instant, its extent reported rather than passed silently, and an instant not yet in force reported as a finding. |
 | `0.2.5-draft` | 2026-09-19 | Moves delegation path resolution out of §1.2 (normative exclusions) into §1.3 (future extensions), and narrows it. 0.2.3 had excluded "path resolution and per-path fail-closed semantics" as one item; the second half is lifecycle, which this standard owns, and §6.7's demotion rule already determines when authority along a path stops being valid. The exclusion as written disclaimed a rule this specification is positioned to state. §1.3 now separates the two: resolving *which* path applies where several reach one agent belongs to the delegation mechanism, while a derived grant neither outliving nor out-ranking the grant it derives from is reserved for the version that adds derived grants. Conveying authority in a token stays a §1.2 non-goal, unchanged. No clause, schema, or wire change. |
+| `0.2.6-draft` | 2026-09-20 | Rewrites §10.2 to name the public reference implementation, [ptc-gal-reference](https://github.com/wjatx/ptc-gal-reference), which the section did not previously mention: it named a private repository a reader cannot open. Restates the claim as one about the CODE rather than about a deployment the authors operate, and gives the reader the procedure to check it from a checkout with no cloud account. Removes the assertion that the grant-integrity audit runs "continuously in CI on two environments" — that workflow is manually triggered and had not run in eight weeks. The end-to-end deployment drills are retained but relabelled as recorded history rather than reader-verifiable evidence. Non-normative section; no clause, schema, or wire change. |
 
 ### 10.2 Reference implementation
 
-**safe-agents** (controlled-agents) implements both conformance roles: its ceremony command set is
-the reference issuer, its broker the reference enforcer. The lifecycle is live-drilled
-end-to-end: a real principal promoted on real approval evidence under maker≠checker with a
-distinct least-privilege identity per leg; all four demotion triggers fired live against real
-grants; re-attestation exercised after a real envelope change; the independent
-grant-integrity audit running continuously in CI on two environments; and a full-arc terminal
-proof (evidence → propose → ratify → exercise → induced demotion → re-climb → exercise)
-completed 2026-07-15. Its L1–L8 lifecycle conformance suite seeds this specification's
-conformance tests.
+**[ptc-gal-reference](https://github.com/wjatx/ptc-gal-reference)** implements both conformance
+roles: its ceremony command set is the reference issuer, its broker the reference enforcer. Its
+L1–L8 lifecycle conformance suite seeds this specification's conformance tests.
+
+**The claim here is about the code, not about any deployment its authors operate.** Clone the
+implementation, clone these specifications into a `spec/` directory at its root, and run its
+test suite: the
+tests that compare specification text against the shipped schemas then execute rather than skip,
+and its continuous integration does exactly that on every commit. Across both specifications 22 of
+81 conformance clauses are marked normative ahead of the implementation and individually tracked
+(§3); none has been outgrown by the implementation. What a reader can check from a checkout, with
+no cloud account and no credential, is the whole of what is claimed here.
+
+The lifecycle has separately been drilled end-to-end against deployed infrastructure: a real
+principal promoted on real approval evidence under maker≠checker with a distinct least-privilege
+identity per leg, all four demotion triggers fired against real grants, re-attestation after a real
+envelope change, and a full-arc terminal proof (evidence → propose → ratify → exercise → induced
+demotion → re-climb → exercise) completed 2026-07-15. Those runs are recorded history, not
+reproducible from a checkout, and are offered as such rather than as evidence a reader can verify.
 
 ### 10.3 References
 
