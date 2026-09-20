@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | `0.2.4-draft` |
+| **Version** | `0.2.5-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
 | **Date** | 2026-09-19 |
 | **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
@@ -50,9 +50,6 @@ provenance-maturity ceiling on acting rungs (§6.13).
   gate is out of scope; the sibling PTC specification records the evaluated-and-declined
   decision on general-purpose policy languages (a differential spike over the full reachable
   input space of the reference gate), and GAL's promotion predicate inherits that decision.
-- **Delegation path resolution.** GAL checks a grant at the enforcement point; it does not
-  resolve delegation paths. Where several delegation paths reach the same agent, path
-  resolution and per-path fail-closed semantics belong to the delegation mechanism.
 - **Conveying authority in a token.** GAL stores authority in the grant store, changed only
   through signed ledger records (§6.10), rather than conveying it in a delegation token; the
   sibling PTC specification's signed envelope conveys what a receiver needs to verify provenance
@@ -62,6 +59,17 @@ provenance-maturity ceiling on acting rungs (§6.13).
 
 ### 1.3 Future extensions (out of scope for this version)
 
+- **Derived grants, and the delegation paths they create.** This version has no derived-grant
+  (sub-grant) concept: a grant names one principal and is checked at the enforcement point, so no
+  call arrives by a path and the question of which path authorized it does not arise. Two halves
+  separate for a version that adds derivation, and only one of them is this standard's. Resolving
+  *which* path applies, where several reach the same agent, is a property of how authority was
+  conveyed and belongs to the delegation mechanism. *When a path ceases to be valid* is lifecycle,
+  which this standard does own: the rule it would extend is §6.7's, that authority demoted or
+  lapsed is enforced at `lastSafeLevel` from that instant, applied so that a derived grant can
+  neither outlive nor out-rank the grant it derives from and a demotion at any node invalidates
+  every path through it. No such clause is stated here, because no conforming implementation has a
+  derived grant to apply it to.
 - **N>1 quorum ratification and owner-key rotation.** This draft is honest about the N=1
   operator case (§6.4.3, §8.3); quorum ratification and ratifier-key rotation
   mid-evidence-window are tracked for a future version (reference-implementation tracking
@@ -1107,6 +1115,7 @@ nothing.
 | `0.2.2-draft` | 2026-08-03 | Corrects §8.1 (Evidence poisoning), whose mitigation direction and normative SHOULD were both keyed on taint while the attack they name does not require it (#342). Grooming a promotion needs no tainted turn: a patient adversary, or drift with no adversary, can produce a clean behavioral record that the predicate rewards, leaving a taint-aware evidence window nothing to weight. §8.1 now separates tainted from untainted grooming, keeps the existing taint-aware guidance scoped to the first, adds a MUST NOT against reading absence of taint as absence of grooming, and states the structural asymmetry that motivates both: taint is a ratchet and cannot be farmed, whereas an evidence window rewarding accumulated clean behavior is a credit mechanism whose state the subject improves through its own conduct. Names maker≠checker ratification (§6.4), not the predicate, as what bounds the untainted case, and directs ratifiers to read a clean window as absence of recorded trouble rather than as positive evidence of trustworthiness. No clause, schema, or wire change; §8.1 carries no conformance clause. |
 | `0.2.3-draft` | 2026-09-19 | The lapse arc is implemented: removes the NOT YET IMPLEMENTED markers from §4.3, §5.1, §6.7.6 and GAL-34. §6.7.6 and GAL-34 gain the **evaluation instant** (explicit, never derived from records), enforcement at the lower of level and `lastSafeLevel` from the boundary without waiting for the record, and the after-lapse rules. §5.2 adds `lapse` to `recordType` and the ratified `certifiedUntil` to promotion records, and fixes `demotionReason`'s type scope, which contradicted §4.3's lapse row. §3 pins that a null optional field is omitted from the canonical form; `Grant.certifiedUntil` becomes optional accordingly. §4.1 and new clause GAL-36 make in-loop approval consumption keyed on the bound call and the whole principal. §6.11 makes an unexplained level drop, and a term that differs from the ratified one, audit findings. §1.2 adds delegation path resolution and token-conveyed authority as non-goals. The evaluation-instant rule, GAL-36 and the delegation non-goal respond to implementer findings against the IETF WIMSE cross-org delegation draft. |
 | `0.2.4-draft` | 2026-09-19 | Scopes signing authority by record type in §6.10, with clauses GAL-37 and GAL-38. §6.10 had required every ledger record to be signed while §6.7.2 required the automatic evaluator to be a separate identity, and the reference implementation signed only promotions. The two requirements are jointly satisfiable only through two keys: an issuer key for the records that raise or re-license authority and a separate evaluator key for demotion and lapse, with verification selecting the acceptable keys from the record type and refusing a key resolvable under both. §6.10 also states how a deployment adopts signing over history it cannot re-sign: an explicit recorded instant, its extent reported rather than passed silently, and an instant not yet in force reported as a finding. |
+| `0.2.5-draft` | 2026-09-19 | Moves delegation path resolution out of §1.2 (normative exclusions) into §1.3 (future extensions), and narrows it. 0.2.3 had excluded "path resolution and per-path fail-closed semantics" as one item; the second half is lifecycle, which this standard owns, and §6.7's demotion rule already determines when authority along a path stops being valid. The exclusion as written disclaimed a rule this specification is positioned to state. §1.3 now separates the two: resolving *which* path applies where several reach one agent belongs to the delegation mechanism, while a derived grant neither outliving nor out-ranking the grant it derives from is reserved for the version that adds derived grants. Conveying authority in a token stays a §1.2 non-goal, unchanged. No clause, schema, or wire change. |
 
 ### 10.2 Reference implementation
 
