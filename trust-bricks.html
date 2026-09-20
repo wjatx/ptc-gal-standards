@@ -5,7 +5,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Trust Bricks: the safe-agents composition model</title>
+<title>Trust Bricks: the reference implementation's composition model</title>
 <style>
   :root{
     color-scheme:light dark;
@@ -215,7 +215,7 @@
 
   <header class="top">
     <button class="themebtn" id="tg" type="button">◐ theme</button>
-    <div class="eyebrow">safe-agents · composition model</div>
+    <div class="eyebrow">ptc-gal-reference · composition model</div>
     <h1>Trust bricks: agents that <em>snap together</em></h1>
     <p class="lede">An agent is one studded brick-stack. What makes it safe stays per-agent and un-shareable; the machinery underneath is shared code. You compose a mesh the way you build with Lego: the studs are a contract, so any emitter fits any receiver that honors it.</p>
     <div class="legend">
@@ -309,7 +309,7 @@
           </div>
         </div>
       </div>
-      <p class="note"><b>Same code, config differs.</b> The two traders run one program; only provider and rung change. A signal is <em>data</em>: the trader re-decides under its own polarity, so "approved peer" never means "believed peer." And a brick can even live on a different cloud: the studs are the wire contract, not the transport, as long as it's a real safe-agents broker enforcing provenance.</p>
+      <p class="note"><b>Same code, config differs.</b> The two traders run one program; only provider and rung change. A signal is <em>data</em>: the trader re-decides under its own polarity, so "approved peer" never means "believed peer." And a brick can even live on a different cloud: the studs are the wire contract, not the transport, as long as it's a real the reference broker enforcing provenance.</p>
     </div>
   </section>
 
@@ -372,8 +372,8 @@
   <footer>
     <p class="thesis">The trust boundary is <b>per-agent and never shared</b>. The mechanism behind it is shared code + shared infra + a small per-agent resource set; how much of that set is truly per-agent versus multiplexed is a <b>deployment dial</b>, not part of the agent contract.</p>
     <div class="refs">
-      <span>safe-agents · <code>docs/scaling-and-mesh.md</code> · the isolated-vs-multiplexed topology</span>
-      <span>safe-agents · <code>docs/canonical-consumer.md</code> · the five-seam consumer anatomy</span>
+      <span>ptc-gal-reference · <code>docs/scaling-and-mesh.md</code> · the isolated-vs-multiplexed topology</span>
+      <span>ptc-gal-reference · <code>docs/canonical-consumer.md</code> · the five-seam consumer anatomy</span>
       <span>trading-agent · <code>docs/agent-set.md</code> · the worked mesh above</span>
     </div>
   </footer>

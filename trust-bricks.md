@@ -1,4 +1,4 @@
-# Trust bricks: the safe-agents composition model
+# Trust bricks: the reference implementation's composition model
 
 A visual companion to the two spec drafts, for readers who think in pictures. The full
 interactive version is [`trust-bricks.html`](trust-bricks.html) (open it in any browser; it is
@@ -123,5 +123,5 @@ The trust boundary is per-agent and never shared. The mechanism behind it is sha
 shared infra plus a small per-agent resource set, and how much of that set is truly per-agent
 versus multiplexed is a deployment dial, not part of the agent contract.
 
-*Source diagrams in the safe-agents repo: `docs/scaling-and-mesh.md` (topology),
+*Source diagrams in the reference implementation: `docs/scaling-and-mesh.md` (topology),
 `docs/canonical-consumer.md` (consumer anatomy).*

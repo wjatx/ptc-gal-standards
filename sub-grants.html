@@ -124,12 +124,20 @@
 <div class="wrap">
 <header class="top">
   <button class="themebtn" id="tg" type="button">◐ theme</button>
-  <p class="eyebrow">safe-agents · broker contract · sub-grants</p>
+  <p class="eyebrow">ptc-gal-reference · broker contract · sub-grants</p>
   <h1>Delegation that only narrows</h1>
   <p class="lede">Durable agents act over weeks; the sub-agents they spawn live for minutes.
   The contract that keeps that safe: <strong>a sub-agent holds no standing authority of its
   own</strong>. It runs on a broker-computed derivative of its parent's grant, and everything it
   does attributes up the chain to the human.</p>
+  <p class="note"><b>Status: contract, not a shipped mechanism.</b> The attenuation computation is
+  built and tested in the reference implementation, and no execution path issues a sub-grant or
+  charges a child's actions against an ancestor's budget
+  (<a href="https://github.com/wjatx/ptc-gal-reference/issues/11">ptc-gal-reference#11</a>).
+  Delegation is also out of scope for GAL 0.2.x (&sect;1.3). Read this page as the candidate seam it
+  is. Note too that the chain carries <em>grant identifiers</em>, which resolve to principals only
+  for a holder of the grant store; conveying the on-behalf-of principal across a boundary is the
+  open problem, and is why PTC binds <code>principal</code> into the signed statement.</p>
   <div class="legend" aria-label="Line-style key">
     <span><span class="sw"></span>durable · ceremony-minted, standing</span>
     <span><span class="sw dash"></span>ephemeral · derived, short-lived</span>
@@ -327,10 +335,10 @@ broker from its own sub-grant record, never from anything the sub-agent asserts.
 
   <line x1="380" y1="264" x2="380" y2="288" stroke="currentColor" stroke-width="1.2"/>
   <rect x="196" y="292" width="370" height="26" rx="6" style="fill:var(--surface); stroke:var(--line-strong)" stroke-width="1.3"/>
-  <text x="381" y="309" text-anchor="middle" font-size="10.5" font-family="var(--mono)" style="fill:var(--ink)">delegationChain: [human, parent, SG₂] · broker-stamped</text>
+  <text x="381" y="309" text-anchor="middle" font-size="10.5" font-family="var(--mono)" style="fill:var(--ink)">delegationChain: [rootGrant, parentGrant, SG₂] · broker-stamped</text>
 </svg>
 <figcaption><b>Lifetimes nest; the record outlives them all.</b> Every sub-agent bar sits strictly
-inside the parent grant's span, and every action lands on the tape with the full principal chain.
+inside the parent grant's span, and every action lands on the tape with the full grant lineage.
 When someone asks who authorized an action after the sub-agent is gone, the answer is the recorded
 chain.</figcaption>
 </figure>
@@ -345,14 +353,14 @@ chain.</figcaption>
   <span class="tag">Status</span>
   <p>Delegation is explicitly out of scope for GAL 0.2.x (§1.3; §8.3 names it unspecified in
   this version). The model on this page is reference-implementation doctrine
-  (<code>broker/sub-grants.md</code> in the safe-agents working tree, with ancestry in ch. 41 of
+  (<code>broker/sub-grants.md</code> in the reference implementation, with ancestry in ch. 41 of
   the design corpus) and the candidate shape for a future spec revision. Enforcement sits in the
   autonomy-ratchet tier of the build order and is not yet live in the reference implementation.</p>
 </div>
 
 <footer>
   <span class="note">Grant, level, envelope and audit vocabulary as in GAL-SPEC.md (this
-    repository). safe-agents is the reference implementation. Siblings:
+    repository). ptc-gal-reference is the reference implementation. Siblings:
     <a href="index.html">trust bricks</a> · <a href="data-flow.html">data flow</a> ·
     <a href="standards.html">standards landscape</a>.</span>
   <span>Compiled 2026-08-13</span>

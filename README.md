@@ -17,9 +17,11 @@ defined before the structures that use them; every object as a field table plus 
 example; numbered conformance clauses (`PTC-n` / `GAL-n`) with a mapping table back to the origin
 clause sets (M/W/S/L) so the existing conformance suites stay traceable; an explicit maturity
 statement in each header (wire schemas may change before 1.0); implementation-agnostic
-normative text, with the reference implementation (safe-agents) confined to clearly-marked
-non-normative notes. Both headers carry a **discussion-only IPR statement**: the drafts are
-shared for discussion and grant no license or other IP right.
+normative text, with the reference implementation
+([ptc-gal-reference](https://github.com/wjatx/ptc-gal-reference)) confined to clearly-marked
+non-normative notes. Both are licensed under the **Community Specification License 1.0**
+(`SPDX-License-Identifier: Community-Spec-1.0`); see `LICENSE.md` for terms and `NOTICE.md`
+for attribution, acceptance, and patent exclusions.
 
 Three drafting rules follow from "spec text follows the shipped contracts". **A clause number is
 never reused** — withdrawing a clause marks it withdrawn and reserved in place, never renumbers
@@ -81,15 +83,15 @@ for a reviewer meeting both seams for the first time. Paragraphs are labeled PTC
 clause IDs, and it carries its own section on what neither proposal solves. Neither document is
 normative and neither should be cited for a requirement.
 
-**Unlike the diagram pages below, these two are copies.** Both are edited in the safe-agents working
-tree (`docs/lf-standards-brief.md`, `docs/sci-fi-primer.md`) and copied here, so an edit made in this
-repo is one the next upstream copy will overwrite.
+**Unlike the diagram pages below, these two are copies.** Both are maintained upstream and copied
+here, so an edit made in this repo is one the next upstream copy will overwrite. Raise changes to
+them against the reference implementation rather than here.
 
 ---
 
 **Visual resources — THIS REPO IS THE CANONICAL HOME of the diagram pages** (they are not part
-of the spec snapshot): [`trust-bricks.md`](trust-bricks.md) renders the safe-agents composition
-model as mermaid diagrams inline on GitHub; [`trust-bricks.html`](trust-bricks.html) is the full
+of the spec snapshot): [`trust-bricks.md`](trust-bricks.md) renders the reference
+implementation's composition model as mermaid diagrams inline on GitHub; [`trust-bricks.html`](trust-bricks.html) is the full
 interactive version (self-contained, open in any browser). [`data-flow.html`](data-flow.html)
 walks a signal across two agents step by step, labeling which of PTC and GAL governs each
 element, with the rung ladder, both lifecycle paths, and the maturity-ceiling join (accurate to
@@ -103,7 +105,7 @@ candidate seam for a future revision, and says so on the page.
 [`mesh.html`](mesh.html) shows the agent-to-agent shape: every edge is the sender's broker talking
 to the receiver's airlock, and a mesh is that one edge repeated with nothing in the center. Its
 companion prose document is [`broker-airlock-mesh.md`](broker-airlock-mesh.md) (a copy, like the
-brief; canonical in the safe-agents working tree).
+brief; maintained upstream).
 
 The HTML pages are also published (publicly) on GitHub Pages, for presenting without a clone:
 
