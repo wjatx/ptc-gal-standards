@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | `0.2.7-draft` |
+| **Version** | `0.2.8-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
 | **Date** | 2026-09-21 |
 | **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
@@ -819,7 +819,7 @@ green-with-annotations, never silently green.
 
 **Reconciliation against the live principal set.**
 
-> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #256).
+> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #14).
 
 Ledger completeness is necessary and not sufficient: it proves every grant has a story, never
 that every acting principal has a grant or that every grant still names a principal that
@@ -883,8 +883,8 @@ satisfiable by a third party holding read-only access.
 - **GAL-1** A grant SHALL bind exactly one `(principal, action-class)` pair; implementations MUST NOT expose or act on an agent-scoped autonomy level.
 - **GAL-2** The `level` enumeration SHALL be complete at `in-loop`, `on-loop`, `out-of-loop`; Recommend SHALL be represented only as the absence of a grant and MUST NOT become a level value.
 - **GAL-3** Level SHALL be orthogonal to the per-call decision verbs; no verb outcome may mutate a level and no level may be inferred from a verb.
-- **GAL-4** The ceremony (and the automatic demotion path) SHALL be the grant store's only mutation paths (exclusivity of those paths: not yet implemented — #372); the issuer MUST refuse any other write.
-- **GAL-5** The promotion licensing predicate SHALL be pure and deterministic with no model output in the path, and SHALL NEVER license a promotion on an input it cannot interpret. **Evidence** that is ambiguous — thin, absent, stale, or uncorroborated — SHALL resolve to ineligible. Input that is **structurally invalid** — a negative counter, a total exceeding its window, an unknown enumeration value — SHALL refuse loudly and SHALL NOT resolve to ineligible, because a broken evidence pipeline reported as ineligible is indistinguishable from an honest denial and directs the proposer to gather more evidence, which can never fix it. A loud refusal SHALL still produce a recorded outcome (a recorded outcome on the ratify path: not yet implemented — #380).
+- **GAL-4** The ceremony (and the automatic demotion path) SHALL be the grant store's only mutation paths (exclusivity of those paths: not yet implemented — #27); the issuer MUST refuse any other write.
+- **GAL-5** The promotion licensing predicate SHALL be pure and deterministic with no model output in the path, and SHALL NEVER license a promotion on an input it cannot interpret. **Evidence** that is ambiguous — thin, absent, stale, or uncorroborated — SHALL resolve to ineligible. Input that is **structurally invalid** — a negative counter, a total exceeding its window, an unknown enumeration value — SHALL refuse loudly and SHALL NOT resolve to ineligible, because a broken evidence pipeline reported as ineligible is indistinguishable from an honest denial and directs the proposer to gather more evidence, which can never fix it. A loud refusal SHALL still produce a recorded outcome (a recorded outcome on the ratify path: not yet implemented — #32).
 - **GAL-6** The predicate SHALL evaluate at least the seven gate terms of §6.4.1 in a fixed order, with unset knobs constituting no gate.
 - **GAL-7** `proposedBy` and `ratifiedBy` on a promotion SHALL be credentials that **a single operator cannot satisfy both of**; the comparison SHALL reject any pair a lone operator can produce, and credential-identity equality is a floor rather than the whole test. Where an identity embeds unstable components (a hostname, a session id), the comparison SHALL additionally reject pairs sharing a ceremony role, since equality alone passes the same operator twice. The record SHALL evidence both non-repudiably. The standard enforces two credentials and evidences — not enforces — two humans.
 - **GAL-8** For high-blast classes, a true predicate SHALL carry an explicit per-instance human-ratification requirement that the ceremony MUST NOT drop; an unknown blast class SHALL be an error.
@@ -893,7 +893,7 @@ satisfiable by a third party holding read-only access.
 - **GAL-11** Every durable input the ceremony consumes SHALL carry tamper-evidence or be fully re-validated at the trust boundary; proposals SHALL be single-use and expiring.
 - **GAL-12** The evidence window's span and period SHALL be bound under the proposal's integrity mechanism; covered-distribution soundness SHALL be recorded as an explicit proposer assertion.
 - **GAL-13** Any level → `in-loop` SHALL be permitted without ceremony and SHALL append a `tightening`-typed record.
-- **GAL-14** Grant creation outside the ceremony SHALL emit a `bootstrap`-typed record; no grant SHALL lack a ledger counterpart (both, on the runtime bootstrap path: not yet implemented — #372).
+- **GAL-14** Grant creation outside the ceremony SHALL emit a `bootstrap`-typed record; no grant SHALL lack a ledger counterpart (both, on the runtime bootstrap path: not yet implemented — #27).
 - **GAL-15** On envelope change, the grant SHALL be re-attested — prior level, under human ratification, appending **no** ledger record, since no level changed — and the re-attestation SHALL refuse on configuration mismatch, failing toward writing nothing.
 - **GAL-16** Every level change SHALL append exactly one typed record on one append-only ledger; records SHALL never be overwritten, mutated, or removed.
 - **GAL-17** Structurally invalid transitions SHALL be unconstructible (typed refusal), including any demotion target of `out-of-loop`.
@@ -908,10 +908,10 @@ satisfiable by a third party holding read-only access.
 - **GAL-23** Demotion SHALL be tripped only by the four triggers of §4.2, each derived deterministically from typed durable inputs, with no model call on the path.
 - **GAL-24** A tripped demotion SHALL move the grant to `lastSafeLevel` **or lower, and SHALL NEVER raise its autonomy**; where `lastSafeLevel` ranks above the grant's current level the trip SHALL leave the level unchanged and still append its record. `lastSafeLevel` SHALL never be `out-of-loop`.
 - **GAL-25** `demotionReason` SHALL follow the fixed trigger mapping, `"failing"` dominating mixed firings, and the two reasons SHALL never be collapsed.
-- **GAL-26** Every demotion SHALL append a `demotion`-typed record (ratified by the system evaluator identity) and emit an audit event (the audit event: not yet implemented — #375); demotion writes SHALL run under an identity separate from the agent.
+- **GAL-26** Every demotion SHALL append a `demotion`-typed record (ratified by the system evaluator identity) and emit an audit event (the audit event: not yet implemented — #28); demotion writes SHALL run under an identity separate from the agent.
 - **GAL-27** A trigger SHALL fire only for grants listing it in `demotionTriggers`; `false_action` SHALL derive from an authenticated durable counter, a single flag sufficing, and no flag SHALL ever promote.
-- **GAL-28** `budget_breach` SHALL be derived from the same durable counter, key, and comparison that per-call enforcement uses; an unusable evidence input SHALL cause a loud refusal, never "no breach" (loud refusal on a counter-period mismatch: not yet implemented — #376).
-- **GAL-29** Re-promotion SHALL require fresh recalibration evidence and satisfy dwell-time hysteresis (the hysteresis gate on the promotion path: not yet implemented — #377); demotion SHALL have no dwell.
+- **GAL-28** `budget_breach` SHALL be derived from the same durable counter, key, and comparison that per-call enforcement uses; an unusable evidence input SHALL cause a loud refusal, never "no breach" (loud refusal on a counter-period mismatch: not yet implemented — #29).
+- **GAL-29** Re-promotion SHALL require fresh recalibration evidence and satisfy dwell-time hysteresis (the hysteresis gate on the promotion path: not yet implemented — #30); demotion SHALL have no dwell.
 - **GAL-30** A grant's integrity value SHALL bind its **stored bytes**, SHALL live outside the record it protects, and SHALL be verified verbatim *before* the bytes are parsed. A grant failing verification, or carrying an `envelopeHash` not in force, SHALL be quarantined loudly on every call — treated as no grant, with an audit-visible signal distinguishable from not-found.
 
 - **GAL-34** Where a grant carries a certification term, its expiry SHALL lapse the grant to `lastSafeLevel` with `demotionReason` `"pending-evidence"` and a `lapse`-typed record; a lapse SHALL NOT be recorded as a triggered demotion, SHALL NOT revoke authority outright, and SHALL NOT be auto-renewed or extended in place by the holder. A grant carrying no term SHALL NOT lapse. Term expiry SHALL be judged against an explicit evaluation instant, never one derived from the timestamps of the records under evaluation, and from that instant the grant SHALL be enforced at the lower of its level and `lastSafeLevel` whether or not the lapse record has been written.
@@ -924,12 +924,12 @@ satisfiable by a third party holding read-only access.
 
 - **GAL-31** An independent, read-only party SHALL be able to re-verify the full ledger: signatures, transition validity, envelope binding, and the no-orphan invariant.
 - **GAL-32** Audit findings SHALL be dispositioned only by signed, append-only acknowledgment artifacts binding rule + coordinate + violation digest; the waivable vocabulary SHALL be closed, integrity-tamper findings SHALL be un-waivable, and an unverifiable waiver SHALL NOT be applied.
-- **GAL-33** Each armed demotion trigger SHALL have been drilled against a live grant before being relied upon, and a promotion SHALL NOT be considered complete until the promoted grant has acted once. **The first act under a promoted grant SHALL be recoverable from the audit record** (the join from audit record to promotion: not yet implemented — #378) by a read-only party — the enforcement point writes it, and the ceremony ledger cannot, since the enforcing component is barred from writing the grant store.
+- **GAL-33** Each armed demotion trigger SHALL have been drilled against a live grant before being relied upon, and a promotion SHALL NOT be considered complete until the promoted grant has acted once. **The first act under a promoted grant SHALL be recoverable from the audit record** (the join from audit record to promotion: not yet implemented — #31) by a read-only party — the enforcement point writes it, and the ceremony ledger cannot, since the enforcing component is barred from writing the grant store.
 - **GAL-37** Ledger records SHALL be signed under the role their record type names (the issuer's key for `promotion`, `bootstrap` and `tightening`, a separate evaluator key for `demotion` and `lapse`), and no identity SHALL hold both roles' signing keys. A verifier SHALL select the acceptable keys from the record type, SHALL refuse a record signed by the other role's key, and SHALL refuse a key resolvable under both.
 - **GAL-38** Where record signing is adopted over existing history, the exemption SHALL be an explicit recorded instant judged against an explicit evaluation instant, its extent SHALL be reported rather than passed silently, and an exemption instant not yet in force SHALL be a finding.
 - **GAL-35** An auditor SHALL be able to reconcile the grant set against the live principal set in both directions — principals acting without a grant, and grants whose principal no longer exists — and SHALL report rather than write; retiring a grant remains a ceremony.
 
-  > **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #256).
+  > **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #14).
 
 ### 7.5 Clause origin mapping (non-normative)
 
@@ -969,7 +969,7 @@ satisfiable by a third party holding read-only access.
 | GAL-32 | grant-lifecycle §"audit instrument" (#196 acknowledgment ceremony) |
 | GAL-33 | grant-lifecycle §"This must be drilled"; lessons doctrine ("a promotion is not done until the promoted grant acts once") |
 | GAL-34 | Five Eyes *Careful adoption of agentic AI services* (2026-05-01), the "expiry timers and recorded grant chains" pairing; `docs/references/five-eyes-agentic-guidance.md` FE-1. The evaluation-instant sentence answers an implementer finding against the IETF WIMSE cross-org delegation draft (finding 4, expired authority kept alive through quiet periods). |
-| GAL-35 | Five Eyes *Careful adoption of agentic AI services*, "periodically reconcile the registry against the live set of agents"; `docs/references/five-eyes-agentic-guidance.md` FE-2. Normative ahead of the reference implementation (§3; tracking #256). |
+| GAL-35 | Five Eyes *Careful adoption of agentic AI services*, "periodically reconcile the registry against the live set of agents"; `docs/references/five-eyes-agentic-guidance.md` FE-2. Normative ahead of the reference implementation (§3; tracking #14). |
 | GAL-36 | GAL §4.1; reference implementation `broker/runtime/pep.py` (`_owns_intent`, the full-principal ownership check) and `approval/`; an implementer finding against the IETF WIMSE cross-org delegation draft (approvals burned by a third party citing their identifier). |
 | GAL-37 | GAL §6.10 (this revision); §6.7.2's separate evaluator identity read together with §6.10's sign-everything requirement. Reference implementation `broker/grants/record_signing.py` (`RECORD_TYPE_SIGNING_ROLE`, `verify_record_by_type`) and the IAM namespace split in `infra/lib/identity-stack.ts`. |
 | GAL-38 | GAL §6.10 (this revision); the epoch-cut convention for a ledger that cannot be re-minted, reference implementation `RECORD_SIGNING_EPOCH`. |
@@ -1125,6 +1125,8 @@ nothing.
 | `0.2.6-draft` | 2026-09-20 | Rewrites §10.2 to name the public reference implementation, [ptc-gal-reference](https://github.com/wjatx/ptc-gal-reference), which the section did not previously mention: it named a private repository a reader cannot open. Restates the claim as one about the CODE rather than about a deployment the authors operate, and gives the reader the procedure to check it from a checkout with no cloud account. Removes the assertion that the grant-integrity audit runs "continuously in CI on two environments" — that workflow is manually triggered and had not run in eight weeks. The end-to-end deployment drills are retained but relabelled as recorded history rather than reader-verifiable evidence. Non-normative section; no clause, schema, or wire change. |
 
 | `0.2.7-draft` | 2026-09-21 | Adds **GAL-39**: a derived grant may neither outlive nor out-rank the grant it derives from, and a demotion or lapse at any node stops every path descending through it from the evaluation instant, whether or not the record has been written. Normative ahead of the reference implementation and marked accordingly (§3; tracking #11). §1.3 is rewritten: 0.2.5 had articulated this rule in prose and then declined to state it as a clause "because no conforming implementation has a derived grant to apply it to", which set this specification's requirement to the reference implementation's current coverage. §3's marker convention exists precisely so a settled design question can be stated at the specification tier while the code catches up, and GAL-35 already used it; withholding GAL-39 understated what GAL requires. §1.3 now retains only the half that is genuinely not ours, resolving which path applies where several reach one agent. Answers the lifecycle half of an implementer finding against the IETF WIMSE cross-org delegation draft. |
+
+| `0.2.8-draft` | 2026-09-21 | Repoints every implementation-status marker at an issue in the PUBLIC reference implementation. The markers previously cited the private working tracker: of the twenty issues cited across both specifications, nineteen resolved only in a repository no reader of the published text can open, while §3 states that `#NNN` is "the reference implementation's public tracking issue for the work". A marker's credibility rests on that pointer being chaseable, since the marker is what lets a clause be normative ahead of the code without overclaiming. Nineteen issues were filed in ptc-gal-reference and the live citations renumbered; historical changelog entries keep their original numbers, because they record what was true when written. No clause text, schema, or wire change. |
 
 ### 10.2 Reference implementation
 
