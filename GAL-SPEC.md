@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | `0.2.8-draft` |
+| **Version** | `0.2.9-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
 | **Date** | 2026-09-21 |
 | **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
@@ -74,8 +74,8 @@ provenance-maturity ceiling on acting rungs (§6.13).
   deployments needing it are served by the delegation specifications (§1.2).
 - **N>1 quorum ratification and owner-key rotation.** This draft is honest about the N=1
   operator case (§6.4.3, §8.3); quorum ratification and ratifier-key rotation
-  mid-evidence-window are tracked for a future version (reference-implementation tracking
-  issue #187).
+  mid-evidence-window are tracked for a future version
+  ([ptc-gal-reference#33](https://github.com/wjatx/ptc-gal-reference/issues/33)).
 - **Evidence weighting for tainted-turn outcomes.** Whether provenance-tainted-turn outcomes
   count toward promotion evidence, at full or discounted weight, is an information-flow-hard
   open problem (§8.1) and is not specified in this version.
@@ -1127,6 +1127,8 @@ nothing.
 | `0.2.7-draft` | 2026-09-21 | Adds **GAL-39**: a derived grant may neither outlive nor out-rank the grant it derives from, and a demotion or lapse at any node stops every path descending through it from the evaluation instant, whether or not the record has been written. Normative ahead of the reference implementation and marked accordingly (§3; tracking #11). §1.3 is rewritten: 0.2.5 had articulated this rule in prose and then declined to state it as a clause "because no conforming implementation has a derived grant to apply it to", which set this specification's requirement to the reference implementation's current coverage. §3's marker convention exists precisely so a settled design question can be stated at the specification tier while the code catches up, and GAL-35 already used it; withholding GAL-39 understated what GAL requires. §1.3 now retains only the half that is genuinely not ours, resolving which path applies where several reach one agent. Answers the lifecycle half of an implementer finding against the IETF WIMSE cross-org delegation draft. |
 
 | `0.2.8-draft` | 2026-09-21 | Repoints every implementation-status marker at an issue in the PUBLIC reference implementation. The markers previously cited the private working tracker: of the twenty issues cited across both specifications, nineteen resolved only in a repository no reader of the published text can open, while §3 states that `#NNN` is "the reference implementation's public tracking issue for the work". A marker's credibility rests on that pointer being chaseable, since the marker is what lets a clause be normative ahead of the code without overclaiming. Nineteen issues were filed in ptc-gal-reference and the live citations renumbered; historical changelog entries keep their original numbers, because they record what was true when written. No clause text, schema, or wire change. |
+
+| `0.2.9-draft` | 2026-09-21 | Repoints §1.3's N>1 ratifier entry at [ptc-gal-reference#33](https://github.com/wjatx/ptc-gal-reference/issues/33). The previous citation was worse than unreachable: it named an issue in a private tracker that described unrelated work, a channel-routing fan whose "N" counts mapped principals rather than ratifiers. A reader who could open it would have been misled, and a reader who could not was told nothing. The new issue states the three questions §8.3 actually groups under the N>1 fan — quorum ratification, ratifier-key rotation inside an evidence window, and delegated ratification — and distinguishes the last from agent-to-agent delegation of action authority, which is GAL-39. Non-normative; no clause, schema, or wire change. |
 
 ### 10.2 Reference implementation
 
