@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| **Version** | `0.2.6-draft` |
+| **Version** | `0.2.7-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
-| **Date** | 2026-09-19 |
+| **Date** | 2026-09-21 |
 | **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
 | **Author** | Wes Jackson (Red Hat) |
 | **Copyright** | © 2026 Red Hat, Inc. |
@@ -59,17 +59,19 @@ provenance-maturity ceiling on acting rungs (§6.13).
 
 ### 1.3 Future extensions (out of scope for this version)
 
-- **Derived grants, and the delegation paths they create.** This version has no derived-grant
-  (sub-grant) concept: a grant names one principal and is checked at the enforcement point, so no
-  call arrives by a path and the question of which path authorized it does not arise. Two halves
-  separate for a version that adds derivation, and only one of them is this standard's. Resolving
-  *which* path applies, where several reach the same agent, is a property of how authority was
-  conveyed and belongs to the delegation mechanism. *When a path ceases to be valid* is lifecycle,
-  which this standard does own: the rule it would extend is §6.7's, that authority demoted or
-  lapsed is enforced at `lastSafeLevel` from that instant, applied so that a derived grant can
-  neither outlive nor out-rank the grant it derives from and a demotion at any node invalidates
-  every path through it. No such clause is stated here, because no conforming implementation has a
-  derived grant to apply it to.
+- **Delegation path resolution.** Derivation splits into two halves and only one of them is this
+  standard's. *When a path ceases to be valid* is lifecycle, which this standard owns and now
+  states: **GAL-39** carries §6.7's rule forward onto derivation, so a derived grant can neither
+  outlive nor out-rank the grant it derives from and a demotion at any node stops every path
+  through it. That clause is normative and marked NOT YET IMPLEMENTED (§3), because the reference
+  implementation has no derived-grant concept yet: a grant names one principal and is checked at
+  the enforcement point, so no call there arrives by a path. The marker is the honest way to say
+  that; withholding the clause until the code caught up would have understated what this
+  specification requires, which is the opposite of what a conformance target is for.
+
+  What remains out of scope is resolving *which* path applies where several reach the same agent.
+  That is a property of how authority was conveyed, it belongs to the delegation mechanism, and
+  deployments needing it are served by the delegation specifications (§1.2).
 - **N>1 quorum ratification and owner-key rotation.** This draft is honest about the N=1
   operator case (§6.4.3, §8.3); quorum ratification and ratifier-key rotation
   mid-evidence-window are tracked for a future version (reference-implementation tracking
@@ -914,6 +916,9 @@ satisfiable by a third party holding read-only access.
 
 - **GAL-34** Where a grant carries a certification term, its expiry SHALL lapse the grant to `lastSafeLevel` with `demotionReason` `"pending-evidence"` and a `lapse`-typed record; a lapse SHALL NOT be recorded as a triggered demotion, SHALL NOT revoke authority outright, and SHALL NOT be auto-renewed or extended in place by the holder. A grant carrying no term SHALL NOT lapse. Term expiry SHALL be judged against an explicit evaluation instant, never one derived from the timestamps of the records under evaluation, and from that instant the grant SHALL be enforced at the lower of its level and `lastSafeLevel` whether or not the lapse record has been written.
 - **GAL-36** An in-loop approval SHALL be consumed only by release or rejection of the frozen call it binds, by the principal (the whole identity tuple) the call was frozen for; consumption SHALL NOT be inferred from the approval's identifier appearing in any record, and the release SHALL execute the stored call and nothing re-sent.
+- **GAL-39** A derived grant SHALL NOT outlive or out-rank the grant it derives from, at any depth of derivation. Where a grant is demoted or lapses, every derived grant descending from it SHALL cease to confer authority from that evaluation instant, whether or not a record of the change has been written, and an enforcement point SHALL NOT admit a call whose authority descends through a node in that state.
+
+  > **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #11).
 
 ### 7.4 Audit clauses
 
@@ -968,6 +973,7 @@ satisfiable by a third party holding read-only access.
 | GAL-36 | GAL §4.1; reference implementation `broker/runtime/pep.py` (`_owns_intent`, the full-principal ownership check) and `approval/`; an implementer finding against the IETF WIMSE cross-org delegation draft (approvals burned by a third party citing their identifier). |
 | GAL-37 | GAL §6.10 (this revision); §6.7.2's separate evaluator identity read together with §6.10's sign-everything requirement. Reference implementation `broker/grants/record_signing.py` (`RECORD_TYPE_SIGNING_ROLE`, `verify_record_by_type`) and the IAM namespace split in `infra/lib/identity-stack.ts`. |
 | GAL-38 | GAL §6.10 (this revision); the epoch-cut convention for a ledger that cannot be re-minted, reference implementation `RECORD_SIGNING_EPOCH`. |
+| GAL-39 | §6.7 read forward onto derivation; `auto-agents/book/ch41` §"Demotion propagates down the chain". Answers the lifecycle half of an implementer finding against the IETF WIMSE cross-org delegation draft (finding 3, a broken path neutralizing a valid one); the other half, resolving WHICH path applies where several reach one agent, belongs to the delegation mechanism and is out of scope (§1.3). Normative ahead of the reference implementation (§3; tracking #11). |
 
 ### 7.6 Implementation Conformance Statement
 
@@ -1117,6 +1123,8 @@ nothing.
 | `0.2.4-draft` | 2026-09-19 | Scopes signing authority by record type in §6.10, with clauses GAL-37 and GAL-38. §6.10 had required every ledger record to be signed while §6.7.2 required the automatic evaluator to be a separate identity, and the reference implementation signed only promotions. The two requirements are jointly satisfiable only through two keys: an issuer key for the records that raise or re-license authority and a separate evaluator key for demotion and lapse, with verification selecting the acceptable keys from the record type and refusing a key resolvable under both. §6.10 also states how a deployment adopts signing over history it cannot re-sign: an explicit recorded instant, its extent reported rather than passed silently, and an instant not yet in force reported as a finding. |
 | `0.2.5-draft` | 2026-09-19 | Moves delegation path resolution out of §1.2 (normative exclusions) into §1.3 (future extensions), and narrows it. 0.2.3 had excluded "path resolution and per-path fail-closed semantics" as one item; the second half is lifecycle, which this standard owns, and §6.7's demotion rule already determines when authority along a path stops being valid. The exclusion as written disclaimed a rule this specification is positioned to state. §1.3 now separates the two: resolving *which* path applies where several reach one agent belongs to the delegation mechanism, while a derived grant neither outliving nor out-ranking the grant it derives from is reserved for the version that adds derived grants. Conveying authority in a token stays a §1.2 non-goal, unchanged. No clause, schema, or wire change. |
 | `0.2.6-draft` | 2026-09-20 | Rewrites §10.2 to name the public reference implementation, [ptc-gal-reference](https://github.com/wjatx/ptc-gal-reference), which the section did not previously mention: it named a private repository a reader cannot open. Restates the claim as one about the CODE rather than about a deployment the authors operate, and gives the reader the procedure to check it from a checkout with no cloud account. Removes the assertion that the grant-integrity audit runs "continuously in CI on two environments" — that workflow is manually triggered and had not run in eight weeks. The end-to-end deployment drills are retained but relabelled as recorded history rather than reader-verifiable evidence. Non-normative section; no clause, schema, or wire change. |
+
+| `0.2.7-draft` | 2026-09-21 | Adds **GAL-39**: a derived grant may neither outlive nor out-rank the grant it derives from, and a demotion or lapse at any node stops every path descending through it from the evaluation instant, whether or not the record has been written. Normative ahead of the reference implementation and marked accordingly (§3; tracking #11). §1.3 is rewritten: 0.2.5 had articulated this rule in prose and then declined to state it as a clause "because no conforming implementation has a derived grant to apply it to", which set this specification's requirement to the reference implementation's current coverage. §3's marker convention exists precisely so a settled design question can be stated at the specification tier while the code catches up, and GAL-35 already used it; withholding GAL-39 understated what GAL requires. §1.3 now retains only the half that is genuinely not ours, resolving which path applies where several reach one agent. Answers the lifecycle half of an implementer finding against the IETF WIMSE cross-org delegation draft. |
 
 ### 10.2 Reference implementation
 
