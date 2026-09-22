@@ -1,6 +1,6 @@
 # PTC — Provenance & Trust Context, Specification
 
-**Version:** 0.2.5-draft
+**Version:** 0.2.6-draft
 **Date:** 2026-09-19
 **Status:** Draft for Linux Foundation agent-standards discussion. Wire schemas may change before
 1.0; see Open Problems and Future Extensions.
@@ -58,7 +58,7 @@ reach tools; A2A is how agents reach agents; PTC is how trust travels across bot
 - **Cross-relay per-signer attribution.** In this version signing is **per-envelope**: a relay
   re-packages the envelope, so upstream signatures are not carried forward; upstream hops still
   ride as lineage. Attributing each intermediate signer *across* a relay requires nested per-hop
-  attestations (tracked as reference-implementation issue #180).
+  attestations (tracked as reference-implementation issue [#13](https://github.com/wjatx/ptc-gal-reference/issues/13)).
 - **Selective content disclosure.** The provenance chain is a contentless index; drill-down to
   upstream source content with least-disclosure semantics (SD-JWT-VC) is reserved.
 
@@ -882,6 +882,8 @@ minted at runtime**; carriage bindings, signature key substrates, transparency-l
 | 0.2.3-draft | 2026-08-06 | Resolves the `transform` contradiction 0.2.2-draft resolved the wrong way. The requirement is the **plus** form in all four places, including §3.3's verb table, and the argument-clamping half now carries the §3-style implementation-status marker (tracking #358) in each place a reader meets it. The earlier softening treated the specification as a description of the reference implementation; it is a description of the design, and the honest way to state a settled requirement the code has not reached is to mark it, not to weaken it. This also restores §6.8's polarity-seam argument, which turns on `transform` emitting *arguments* specifically and was materially weakened by the "and/or" form. Adopting the marker here makes PTC's convention identical to GAL's, where two clauses have carried it since 0.2.1-draft. |
 | 0.2.4-draft | 2026-09-19 | States why §6.6 binds `principal` into the signed statement: a receiver without the sender's log cannot recover the on-behalf-of principal from the chain (RFC 8693's `sub`/`act` distinction). Prompted by an implementer finding against the IETF WIMSE cross-org delegation draft. Rationale only; no clause, schema, or wire change. |
 | 0.2.5-draft | 2026-09-20 | Rewrites the Reference implementation entry to name the public implementation, [ptc-gal-reference](https://github.com/wjatx/ptc-gal-reference), which was not previously named anywhere in this document: the entry pointed at a private repository a reader cannot open. Replaces "running in production since July 2026" with what a reader can actually check — conformance suites runnable from a checkout with no cloud account — and relabels the forged-signer drill as recorded history rather than reproducible evidence. Non-normative entry; no clause, schema, or wire change. |
+
+| 0.2.6-draft | 2026-09-21 | Repoints §1.3's cross-relay per-signer attribution entry at [ptc-gal-reference#13](https://github.com/wjatx/ptc-gal-reference/issues/13). It previously cited "reference-implementation issue #180", a number that resolves in a PRIVATE repository and in no public one, so a reader of this specification could not reach the tracking issue it was directed to. The entry's substance is unchanged: cross-relay attribution stays a future extension requiring nested per-hop attestations, and the linked issue additionally records the proof-of-possession prerequisite, since an attestation portable across a re-packaging relay is liftable unless the presenter can prove control of the key it binds. Non-normative; no clause, schema, or wire change. |
 
 ## 12. References
 
