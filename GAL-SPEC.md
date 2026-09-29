@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | `0.2.9-draft` |
+| **Version** | `0.2.10-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
 | **Date** | 2026-09-21 |
 | **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
@@ -213,6 +213,23 @@ identifier appearing in any execution record; otherwise any party able to write 
 burn another party's approval without using it. Only the principal the call was frozen for
 (the whole identity tuple of §5.1, never the agent identity alone) may release, reject or
 otherwise transition it, and the release executes the stored call and nothing re-sent.
+
+The frozen call includes the authority the call was evaluated under. A human approves the
+call's visible coordinates under the authority shown at approval time, so two calls with the
+same visible fields under different authority are different calls, and a release that runs
+under different authority than the one shown breaks what-you-see-is-what-executes even when
+every other coordinate matches. An enforcement point MUST be able to verify that the authority
+under which a call is released is equivalent to the authority approved; whether that
+equivalence is carried with the approval or reconstructed from immutable records of the frozen
+call is an implementation choice.
+
+Rejection here is the terminal disposition, the one that closes the approval. A non-terminal
+disposition, such as a deferral or a request for changes, is neither release nor rejection: the
+approval stays pending and nothing is consumed. Consumption is keyed on that closure, never on
+the outcome of execution. Whether a released call executed, failed, or ended in an
+indeterminate state is a separate question, and once a release has begun executing, an
+indeterminate outcome MUST NOT return the approval to pending, because a retry could
+duplicate an effect that did occur.
 
 ### 4.2 Demotion triggers (closed set)
 
@@ -915,7 +932,9 @@ satisfiable by a third party holding read-only access.
 - **GAL-30** A grant's integrity value SHALL bind its **stored bytes**, SHALL live outside the record it protects, and SHALL be verified verbatim *before* the bytes are parsed. A grant failing verification, or carrying an `envelopeHash` not in force, SHALL be quarantined loudly on every call — treated as no grant, with an audit-visible signal distinguishable from not-found.
 
 - **GAL-34** Where a grant carries a certification term, its expiry SHALL lapse the grant to `lastSafeLevel` with `demotionReason` `"pending-evidence"` and a `lapse`-typed record; a lapse SHALL NOT be recorded as a triggered demotion, SHALL NOT revoke authority outright, and SHALL NOT be auto-renewed or extended in place by the holder. A grant carrying no term SHALL NOT lapse. Term expiry SHALL be judged against an explicit evaluation instant, never one derived from the timestamps of the records under evaluation, and from that instant the grant SHALL be enforced at the lower of its level and `lastSafeLevel` whether or not the lapse record has been written.
-- **GAL-36** An in-loop approval SHALL be consumed only by release or rejection of the frozen call it binds, by the principal (the whole identity tuple) the call was frozen for; consumption SHALL NOT be inferred from the approval's identifier appearing in any record, and the release SHALL execute the stored call and nothing re-sent.
+- **GAL-36** An in-loop approval SHALL be consumed only by release or terminal rejection of the frozen call it binds, including the authority that call was evaluated under, by the principal (the whole identity tuple) the call was frozen for; a non-terminal disposition SHALL consume nothing; consumption SHALL NOT be inferred from the approval's identifier appearing in any record, nor reversed by an indeterminate execution outcome; and the release SHALL execute the stored call and nothing re-sent, under authority verifiably equivalent to the authority approved.
+
+  > **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #45). Applies to the **authority-equivalence half only**: a held intent carries no authority coordinate, so release verifies that current authority suffices, not that it is the authority approved. The terminal-rejection and indeterminate-outcome halves hold by construction (no non-terminal disposition exists; a release that fails after claiming the approval stays `approved`); pinning tests for both are requested in #44.
 - **GAL-39** A derived grant SHALL NOT outlive or out-rank the grant it derives from, at any depth of derivation. Where a grant is demoted or lapses, every derived grant descending from it SHALL cease to confer authority from that evaluation instant, whether or not a record of the change has been written, and an enforcement point SHALL NOT admit a call whose authority descends through a node in that state.
 
   > **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #11).
@@ -1129,6 +1148,8 @@ nothing.
 | `0.2.8-draft` | 2026-09-21 | Repoints every implementation-status marker at an issue in the PUBLIC reference implementation. The markers previously cited the private working tracker: of the twenty issues cited across both specifications, nineteen resolved only in a repository no reader of the published text can open, while §3 states that `#NNN` is "the reference implementation's public tracking issue for the work". A marker's credibility rests on that pointer being chaseable, since the marker is what lets a clause be normative ahead of the code without overclaiming. Nineteen issues were filed in ptc-gal-reference and the live citations renumbered; historical changelog entries keep their original numbers, because they record what was true when written. No clause text, schema, or wire change. |
 
 | `0.2.9-draft` | 2026-09-21 | Repoints §1.3's N>1 ratifier entry at [ptc-gal-reference#33](https://github.com/wjatx/ptc-gal-reference/issues/33). The previous citation was worse than unreachable: it named an issue in a private tracker that described unrelated work, a channel-routing fan whose "N" counts mapped principals rather than ratifiers. A reader who could open it would have been misled, and a reader who could not was told nothing. The new issue states the three questions §8.3 actually groups under the N>1 fan — quorum ratification, ratifier-key rotation inside an evidence window, and delegated ratification — and distinguishes the last from agent-to-agent delegation of action authority, which is GAL-39. Non-normative; no clause, schema, or wire change. |
+
+| `0.2.10-draft` | 2026-09-29 | Amends §4.1 and **GAL-36** to agree with `draft-jackson-wimse-evaluation-02` §3.1 and §4.3, which cites GAL-36 as the source of its consumption rule and had moved past it. Three changes. The frozen call includes the authority it was evaluated under, and an enforcement point must be able to verify that the authority a call is released under is equivalent to the authority approved; the mechanism is left open. Rejection means only the terminal disposition, so a deferral or a request for changes consumes nothing. Consumption is keyed on closure, never on execution outcome, so an indeterminate outcome after release does not return the approval to pending. The authority-equivalence half is marked NOT YET IMPLEMENTED (tracking: [ptc-gal-reference#45](https://github.com/wjatx/ptc-gal-reference/issues/45)); the other two hold in the reference implementation by construction. Normative change to one clause; no schema or wire change. |
 
 ### 10.2 Reference implementation
 
