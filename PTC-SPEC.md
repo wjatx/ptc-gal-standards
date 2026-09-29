@@ -1,6 +1,6 @@
 # PTC — Provenance & Trust Context, Specification
 
-**Version:** 0.2.7-draft
+**Version:** 0.2.8-draft
 **Date:** 2026-09-19
 **Status:** Draft for Linux Foundation agent-standards discussion. Wire schemas may change before
 1.0; see Open Problems and Future Extensions.
@@ -356,6 +356,19 @@ On accepting an inbound envelope, the receiving airlock MUST:
    one stamped envelope per deduplicated message (dedupe key `(sender.channel_identity,
    event_id)`); replays are silent no-ops.
 4. Feed every provenance `source` into the broker-held receiving turn before the worker acts.
+
+**What the sender learns.** Every refusal at the airlock (an unmapped identity, a principal the
+receiver does not serve, an expired envelope, a failed verification, a screen refusal) is silent
+toward the sender. The response MUST NOT disclose which gate refused, which entry, path or
+signature failed, or any evaluated state of the sender's chain, beyond what the receiver already
+publishes; the refusal is recorded as a drop, where the operator reads it. Toward senders the
+airlock cannot authenticate before it evaluates, every delivered envelope SHOULD receive the same
+response, for example the transport's success status, so that the response itself carries no
+verdict. This departs deliberately from the permanent-refusal signal that verifier-side guidance
+recommends toward an authenticated caller (`draft-jackson-wimse-evaluation-02` §5). At an ingress
+answering unauthenticated senders a distinguishable refusal is a probe result, and a uniform
+success status already stops the sending transport's retries, which is the cost that signal
+exists to avoid.
 
 Taint derivation at ingestion is **deterministic and never model-judged**: a source taints the
 receiving turn if *either* its chain label is `untrusted` *or* the receiver's own input trust map
@@ -759,6 +772,7 @@ One table; the **Role** column names the conformance role each clause binds ("Al
 | PTC-41 | Observer | Observer outputs are PII-safe (digests, codes, counts, opaque refs — never raw identity or content); the remediation vocabulary is closed, construction-validated, deterministically mapped from attribution basis, and contains no shed action. | WATCHDOG W4, W5, W6 |
 | PTC-42 | Receiver (gate) | Escalation is not treated as resolution: a deployment whose safe-default polarity is positive-safe-action operates a liveness contract over a declared expected output and deadline. The monitor is deterministic — it observes that the output did not occur, never why — no model sits on the path, and the sign of life is an enforcement-point-written audit or ledger artifact, never an agent self-report (wiring the liveness predicate to such an artifact: not yet implemented — #26). | friction-doctrine (availability) |
 | PTC-43 | Receiver (gate) | Approval-queue amplification is de-amplified, never shed: identical pending approvals coalesce; a depth threshold may alarm but the deployment still holds every intent; no default path denies, drops, or auto-resolves queued approvals under load. | friction-doctrine (availability) |
+| PTC-44 | Receiver | A refusal at the airlock is silent toward the sender: the response discloses no gate, entry, path, signature or evaluated chain state beyond what the receiver publishes, and toward senders it cannot authenticate before evaluation every delivered envelope SHOULD receive the same response. | TRUST-MAPPING; threat model |
 
 ### 8.3 Origin-mapping coverage
 
@@ -886,6 +900,7 @@ minted at runtime**; carriage bindings, signature key substrates, transparency-l
 | 0.2.6-draft | 2026-09-21 | Repoints §1.3's cross-relay per-signer attribution entry at [ptc-gal-reference#13](https://github.com/wjatx/ptc-gal-reference/issues/13). It previously cited "reference-implementation issue #180", a number that resolves in a PRIVATE repository and in no public one, so a reader of this specification could not reach the tracking issue it was directed to. The entry's substance is unchanged: cross-relay attribution stays a future extension requiring nested per-hop attestations, and the linked issue additionally records the proof-of-possession prerequisite, since an attestation portable across a re-packaging relay is liftable unless the presenter can prove control of the key it binds. Non-normative; no clause, schema, or wire change. |
 
 | 0.2.7-draft | 2026-09-21 | Repoints every implementation-status marker at an issue in the PUBLIC reference implementation. The markers previously cited the private working tracker, so a reader of a marked clause could not reach the work it pointed to. Fourteen PTC markers were renumbered against newly filed [ptc-gal-reference](https://github.com/wjatx/ptc-gal-reference) issues; historical changelog entries keep their original numbers, because they record what was true when written. No clause text, schema, or wire change. |
+| 0.2.8-draft | 2026-09-29 | States what a refused sender learns. §6.1 and new clause **PTC-44** generalize PTC-17's silence-toward-the-sender from unmapped identities to every airlock refusal: the response discloses no gate, entry, path, signature or evaluated chain state beyond what the receiver publishes, and toward senders the airlock cannot authenticate before evaluation, every delivered envelope SHOULD receive the same response. This records as a deliberate choice the reference airlock's uniform success response, and its divergence from the permanent-refusal signal `draft-jackson-wimse-evaluation-02` §5 recommends toward an authenticated caller. Satisfied by the reference implementation as it stands; no schema or wire change. |
 
 ## 12. References
 
