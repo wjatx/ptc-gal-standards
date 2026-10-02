@@ -159,7 +159,7 @@
 
   <header class="top">
     <button class="themebtn" id="tg" type="button">◐ theme</button>
-    <div class="eyebrow">PTC · GAL · data flow · matches 0.2.1-draft</div>
+    <div class="eyebrow">PTC · GAL · data flow · matches 0.3.0-draft</div>
     <h1>Two standards, one flow: trust context moves with the data, authority moves on a ratchet</h1>
     <p class="lede">A <b>research agent</b> reads an untrusted tool, then publishes a signal to a
       <b>trading agent</b>. <b>PTC</b> governs what the signal carries and how the receiver decides
@@ -197,14 +197,17 @@
         <div class="down">▼</div>
         <div class="card ptc"><span class="t"><span class="step">3</span>Agent asks to publish; broker builds the envelope</span>
           <span class="s">agent authors only <code>event_id</code>, <code>principal</code>,
-          <code>payload</code>. The broker stamps sender, provenance and expiry from the turn's real
-          taint state: lineage, not a collapsed bit. A publish is an external write, so on a tainted
+          <code>payload</code>. The broker stamps the audience (the one receiver the envelope is for),
+          sender, provenance and expiry, the provenance from the turn's real taint state: lineage,
+          not a collapsed bit. A publish is an external write, so on a tainted
           turn it escalates through the polarity seam first</span></div>
         <div class="down">▼</div>
         <div class="card sign"><span class="t"><span class="step">4</span>Broker signs the chain</span>
           <span class="s">Ed25519 over a <span class="pill p-sign">DSSE</span> pre-authentication
-          encoding of an <span class="pill p-sign">in-toto</span> statement binding payload hash,
-          hops, signer and the anti-replay identity. The key is the broker's workload identity:
+          encoding of an <span class="pill p-sign">in-toto</span> statement binding the whole
+          envelope: the payload hash, every hop, the signer, and every other field except the two
+          that cannot be signed (the receiver's own <code>sender_class</code> and the signatures
+          themselves). The key is the broker's workload identity:
           <b>the agent cannot sign</b></span></div>
       </div>
     </div>
@@ -213,8 +216,8 @@
       <div class="colh">The wire</div>
       <div class="col">
         <div class="card wire"><span class="t"><span class="step">5</span>Envelope in transit</span>
-          <span class="s">sender identity · payload · append-only provenance chain · per-hop
-          signatures. <code>sender_class</code> is <b>absent on the wire</b>; only the receiver sets
+          <span class="s">audience · sender identity · payload · append-only provenance chain ·
+          signatures over the whole envelope. <code>sender_class</code> is <b>absent on the wire</b>; only the receiver sets
           it. Carriage is transport-orthogonal: <span class="pill p-wire">MCP _meta</span>
           <span class="pill p-wire">A2A ext</span> <span class="pill p-wire">channels</span></span></div>
         <div class="card idn"><span class="t">Who signed, who sent</span>
@@ -227,8 +230,9 @@
       <div class="colh">Agent B · trading</div>
       <div class="col">
         <div class="card ptc"><span class="t"><span class="step">6</span>Airlock re-validates and stamps</span>
-          <span class="s">schema check → signature verification (fail-closed when ON) → trust-map
-          exact match (unmapped = drop, recorded) → dedupe → optional content screen, the one
+          <span class="s">schema check → audience check (addressed to another receiver = drop,
+          recorded) → signature verification (fail-closed when ON; each key is scoped to one zone
+          and its sender identities) → trust-map exact match (unmapped = drop, recorded) → dedupe → optional content screen, the one
           model-judged gate: refuse or pass, never bless. Then exactly one receiver hop is appended
           and <code>sender_class</code> set</span></div>
         <div class="down">▼</div>
@@ -258,7 +262,7 @@
      <tr><td>3</td><td><span class="el">Outbound envelope</span></td><td><span class="pill p-ptc">PTC §6.5</span> broker-stamped provenance from the sending turn, never agent-authored; lineage carries true origins</td></tr>
      <tr><td>4</td><td><span class="el">Chain signature</span></td><td><span class="pill p-sign">DSSE / in-toto</span> shape per <span class="pill p-ptc">PTC §6.6</span>; broker workload key via <span class="pill p-idn">SPIFFE / WIMSE / DID</span></td></tr>
      <tr><td>5</td><td><span class="el">The carriage</span></td><td><span class="pill p-ptc">PTC §4</span> rides orthogonally to transport, verifiable independently of it</td></tr>
-     <tr><td>6</td><td><span class="el">Receiver pipeline</span></td><td><span class="pill p-ptc">PTC §6.1, §6.7, §6.9</span> ingestion stamping, fail-closed verification, screen refuse-or-pass</td></tr>
+     <tr><td>6</td><td><span class="el">Receiver pipeline</span></td><td><span class="pill p-ptc">PTC §6.1, §6.7, §6.9</span> ingestion stamping, the audience check, fail-closed verification under scoped keys, screen refuse-or-pass</td></tr>
      <tr><td>7</td><td><span class="el">One-way rule</span></td><td><span class="pill p-ptc">PTC §6.2</span> no gate output lowers derived taint; sender labels are a floor, never a grant</td></tr>
      <tr><td>8</td><td><span class="el">No-write-up floor</span></td><td><span class="pill p-ptc">PTC §6.4</span> tainted external write escalates, grant-independently; endorsement is reviewed config, never runtime</td></tr>
      <tr><td>9</td><td><span class="el">What B may do at all</span></td><td><span class="pill p-gal">GAL</span> the grant for <code>(principal, trade.place)</code>: its rung decides whether a human is in, on, or out of the loop. Next section</td></tr>
@@ -327,11 +331,11 @@
    <table>
     <thead><tr><th style="width:32%">Ledger record</th><th>What it proves</th></tr></thead>
     <tbody>
-     <tr><td><span class="el">promotion</span></td><td>who proposed, who ratified (maker ≠ checker on credential identity), over which evidence window, under which <code>envelopeHash</code></td></tr>
+     <tr><td><span class="el">promotion</span></td><td>the issuer's signed statement of who proposed and who ratified (maker ≠ checker on credential identity), over which evidence window, under which <code>envelopeHash</code></td></tr>
      <tr><td><span class="el">demotion</span></td><td>which deterministic trigger fired and which reason applies: <code>failing</code> (fix it) vs <code>pending-evidence</code> (gather data), kept distinct end to end</td></tr>
      <tr><td><span class="el">bootstrap</span></td><td>the sanctioned seed: every grant has a ledger counterpart from birth, so the audit's no-orphan invariant holds with no exemption</td></tr>
      <tr><td><span class="el">tightening</span></td><td>a voluntary drop to <code>in-loop</code>, accounted for without ceremony</td></tr>
-     <tr><td><span class="el">lapse</span></td><td>a term expired with nothing proven broken; recorded as an absence, never as a fired trigger <em>(not yet implemented in the reference implementation)</em></td></tr>
+     <tr><td><span class="el">lapse</span></td><td>a term expired with nothing proven broken; recorded as an absence, never as a fired trigger</td></tr>
     </tbody>
    </table>
   </div>
@@ -356,10 +360,10 @@
     In-loop carries no provenance ceiling; it is the approval-gated floor.</div>
 
   <footer>
-    <span class="note">Section references are to PTC-SPEC.md and GAL-SPEC.md (0.2.1-draft, in this
+    <span class="note">Section references are to PTC-SPEC.md and GAL-SPEC.md (0.3.0-draft, in this
       repository). ptc-gal-reference is the reference implementation; identity, signing and transport
       primitives are adopted standards. Names PTC and GAL are final.</span>
-    <span>Compiled 2026-07-30</span>
+    <span>Compiled 2026-07-30, revised 2026-10-02</span>
   </footer>
 
 </div></div>

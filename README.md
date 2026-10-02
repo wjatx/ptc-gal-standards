@@ -57,6 +57,17 @@ weakened to match the reference implementation; PTC states that marker conventio
 numbering is unchanged in both. The same adversary-keyed framing #342 fixed in GAL is still live in
 PTC §9 item 6.
 
+**Both specifications are now at `0.3.0-draft` (2026-10-02).** PTC's is a wire change: a signature
+covers the whole envelope except two named fields, every signature covers the full chain, each
+verification key is scoped to one zone and its sender identities, and an envelope names the one
+receiver it is for (`audience`, PTC-45 to PTC-47). GAL's corrects the ledger's integrity contract:
+a record the evaluator signs can only lower a level and only from where the ledger stands, no
+record is excused from signing by anything it says about itself, and an acknowledgment binds the
+stored bytes of the record it excuses. Each was found by attacking the reference implementation,
+and each was a gap in the specification as well as in the code. The version history at the end of
+each document has the detail. The same revision removes dashes used as punctuation from both
+documents, so the inline marker's short form is now `(not yet implemented, #NNN)`.
+
 **Both Five Eyes gaps that became GAL clauses landed as normative text, and both are marked
 unimplemented**: FE-1 is the certification-term / lapse arc (GAL §6.7.6, `certifiedUntil`, the
 `lapse` record type, GAL-34; tracking #255) and FE-2 is two-direction principal reconciliation
