@@ -57,7 +57,14 @@ weakened to match the reference implementation; PTC states that marker conventio
 numbering is unchanged in both. The same adversary-keyed framing #342 fixed in GAL is still live in
 PTC §9 item 6.
 
-**Both specifications are now at `0.3.0-draft` (2026-10-02).** PTC's is a wire change: a signature
+**Both specifications are now at `0.3.1-draft` (2026-10-02).** GAL extends two of 0.3.0's
+corrections to the records the issuer signs: a promotion that skips a rung is refused wherever a
+record is parsed, not only by the ceremony (GAL-17), and every record must start from the level the
+ledger held before it, whichever role signed it (GAL-37). Both are marked NOT YET IMPLEMENTED.
+PTC-35 now states its condition: it constrains a response screen where an implementation provides
+one and requires none, so its marker is removed.
+
+**`0.3.0-draft` (2026-10-02).** PTC's is a wire change: a signature
 covers the whole envelope except two named fields, every signature covers the full chain, each
 verification key is scoped to one zone and its sender identities, and an envelope names the one
 receiver it is for (`audience`, PTC-45 to PTC-47). GAL's corrects the ledger's integrity contract:

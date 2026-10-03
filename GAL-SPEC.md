@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | `0.3.0-draft` |
+| **Version** | `0.3.1-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
 | **Date** | 2026-10-02 |
 | **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
@@ -249,7 +249,7 @@ Five record types share one append-only ceremony ledger (§5.2).
 
 | `recordType` | Records | Shape rules |
 |---|---|---|
-| `promotion` | The maker≠checker ceremony that raises the level | maker ≠ checker REQUIRED; `predicate` REQUIRED non-empty; `triggeredBy` empty; `demotionReason` null |
+| `promotion` | The maker≠checker ceremony that raises the level | maker ≠ checker REQUIRED; `predicate` REQUIRED non-empty; `triggeredBy` empty; `demotionReason` null; `toLevel` exactly one rung above `fromLevel`, or `in-loop` where `fromLevel` is null |
 | `demotion` | Automatic deterministic demotion | `ratifiedBy` is the system demotion-evaluator identity; `triggeredBy` non-empty; `demotionReason` set; `predicate` null; `toLevel` MUST NOT rank above `fromLevel` and MUST NOT be `out-of-loop` |
 | `bootstrap` | The sanctioned seed: first creation of a grant outside the propose/ratify ceremony | `fromLevel` null; maker ≠ checker NOT enforced (single-operator seed is sanctioned); `predicate` null; `triggeredBy` empty; `demotionReason` null |
 | `tightening` | Voluntary any-level → `in-loop` move (§6.3) | `toLevel` = `"in-loop"`; maker ≠ checker NOT enforced; `predicate` null; `triggeredBy` empty; `demotionReason` null |
@@ -265,8 +265,13 @@ either type that raises a level is authority minted from the side that must only
 Leaving the direction to the state machine alone protects the honest write path and nothing
 else: a record planted in the store never passes through the state machine. The remaining
 transition validity (level ordering, constructibility) is the state machine's obligation (§6.2,
-GAL-17), and the continuity of an evaluator record with the ledger before it is the auditor's
-(§6.11).
+GAL-17), and the continuity of every record with the ledger before it is the auditor's
+(§6.10, §6.11).
+
+The same reasoning holds for the issuer's key. A `promotion` record whose `toLevel` is not
+exactly one rung above its `fromLevel` MUST be refused at construction, by the writer and by
+every reader that parses one (not yet implemented, #159). The ceremony refuses a skip, and a
+record that never passed through the ceremony is the case this rule exists for.
 
 ### 4.4 Demotion reasons
 
@@ -807,6 +812,13 @@ report an evaluator record that breaks continuity, at every coordinate that has 
 or not a grant exists there, and the finding MUST be un-waivable (§6.11): it is a raise the
 issuer never signed.
 
+**The issuer's records are held to the same continuity.** A `promotion` or `tightening` record
+MUST also start from the level the ledger held immediately before it at that coordinate, and an
+auditor MUST report one that does not, as an un-waivable finding (not yet implemented, #159).
+The ceremony reads the level it moves from, so a break is a record that did not come through the
+ceremony, and a promotion that restates its `fromLevel` can hide a skipped rung from the shape
+rule of §4.3.
+
 A verifier MUST select the acceptable key set from the record's type, and MUST refuse a record
 signed by the other role's key. A key resolvable under both roles is a configuration error and
 MUST fail closed rather than resolve in either direction: a key that can sign anything is the
@@ -975,7 +987,7 @@ satisfiable by a third party holding read-only access.
 - **GAL-14** Grant creation outside the ceremony SHALL emit a `bootstrap`-typed record; no grant SHALL lack a ledger counterpart (both, on the runtime bootstrap path: not yet implemented, #27).
 - **GAL-15** On envelope change, the grant SHALL be re-attested (prior level, under human ratification, appending **no** ledger record, since no level changed) and the re-attestation SHALL refuse on configuration mismatch, failing toward writing nothing.
 - **GAL-16** Every level change SHALL append exactly one typed record on one append-only ledger; records SHALL never be overwritten, mutated, or removed.
-- **GAL-17** Structurally invalid transitions SHALL be unconstructible (typed refusal), including any demotion target of `out-of-loop`. A `demotion` or `lapse` record whose `toLevel` ranks above its `fromLevel` SHALL be refused wherever a record is constructed or parsed, not only on the write path.
+- **GAL-17** Structurally invalid transitions SHALL be unconstructible (typed refusal), including any demotion target of `out-of-loop`. A `demotion` or `lapse` record whose `toLevel` ranks above its `fromLevel`, and a `promotion` record whose `toLevel` is not exactly one rung above its `fromLevel`, SHALL be refused wherever a record is constructed or parsed, not only on the write path (the `promotion` half: not yet implemented, #159).
 - **GAL-18** Ledger records SHALL be signed per §6.10 (workload-identity key, envelope hash bound); the issuer SHALL refuse unsigned or half-configured storage absent an explicit, recorded override.
 - **GAL-19** Grant and ledger writes SHALL be conditional, and **no failure SHALL leave a raised grant without its ledger record**. Writing the record before the grant mutation satisfies this by ordering; committing both as one atomic transaction satisfies it by admitting no interruption. An implementation SHALL state which it provides.
 - **GAL-20** Promotions to `on-loop` or `out-of-loop` SHALL require `signed-lineage` provenance maturity as a deterministic predicate term; `in-loop` as a target SHALL carry no provenance ceiling.
@@ -1006,7 +1018,7 @@ satisfiable by a third party holding read-only access.
 - **GAL-31** An independent, read-only party SHALL be able to re-verify the full ledger: signatures, transition validity, envelope binding, the no-orphan invariant, and that no record has been removed and the ledger has not been rolled back (removal and rollback detection: not yet implemented, #157).
 - **GAL-32** Audit findings SHALL be dispositioned only by signed, append-only acknowledgment artifacts binding rule + coordinate + violation digest; the waivable vocabulary SHALL be closed, integrity-tamper findings SHALL be un-waivable, and an unverifiable waiver SHALL NOT be applied. A finding about a stored record SHALL bind that record's stored bytes in its detail, and a finding that cannot be so bound SHALL be un-waivable. An acknowledgment SHALL carry an expiry and SHALL NOT be applied past it (the expiry: not yet implemented, #158).
 - **GAL-33** Each armed demotion trigger SHALL have been drilled against a live grant before being relied upon, and a promotion SHALL NOT be considered complete until the promoted grant has acted once. **The first act under a promoted grant SHALL be recoverable from the audit record** (the join from audit record to promotion: not yet implemented, #31) by a read-only party: the enforcement point writes it, and the ceremony ledger cannot, since the enforcing component is barred from writing the grant store.
-- **GAL-37** Ledger records SHALL be signed under the role their record type names (the issuer's key for `promotion`, `bootstrap` and `tightening`, a separate evaluator key for `demotion` and `lapse`), and no identity SHALL hold both roles' signing keys. A verifier SHALL select the acceptable keys from the record type, SHALL refuse a record signed by the other role's key, and SHALL refuse a key resolvable under both. A record signed under the evaluator role SHALL start from the level the ledger held immediately before it; an auditor SHALL report one that does not, and the finding SHALL be un-waivable.
+- **GAL-37** Ledger records SHALL be signed under the role their record type names (the issuer's key for `promotion`, `bootstrap` and `tightening`, a separate evaluator key for `demotion` and `lapse`), and no identity SHALL hold both roles' signing keys. A verifier SHALL select the acceptable keys from the record type, SHALL refuse a record signed by the other role's key, and SHALL refuse a key resolvable under both. Every record after a coordinate's first SHALL start from the level the ledger held immediately before it, whichever role signed it; an auditor SHALL report one that does not, and the finding SHALL be un-waivable (for records signed under the issuer role: not yet implemented, #159).
 - **GAL-38** Where record signing is adopted over existing history, no record SHALL be excused from the signing requirement by its own timestamp or any other field it carries; unsigned history SHALL be dispositioned per record by acknowledgment (GAL-32) or re-minted. The adoption instant SHALL be explicit and judged against an explicit evaluation instant; one not yet in force SHALL be a finding and SHALL NOT narrow what is checked; and an undeclared adoption SHALL be reported on every audit.
 - **GAL-35** An auditor SHALL be able to reconcile the grant set against the live principal set in both directions (principals acting without a grant, and grants whose principal no longer exists) and SHALL report rather than write; retiring a grant remains a ceremony.
 
@@ -1213,6 +1225,7 @@ nothing.
 
 | `0.2.10-draft` | 2026-09-29 | Amends §4.1 and **GAL-36** to agree with `draft-jackson-wimse-evaluation-02` §3.1 and §4.3, which cites GAL-36 as the source of its consumption rule and had moved past it. Three changes. The frozen call includes the authority it was evaluated under, and an enforcement point must be able to verify that the authority a call is released under is equivalent to the authority approved; the mechanism is left open. Rejection means only the terminal disposition, so a deferral or a request for changes consumes nothing. Consumption is keyed on closure, never on execution outcome, so an indeterminate outcome after release does not return the approval to pending. The authority-equivalence half is marked NOT YET IMPLEMENTED (tracking: [ptc-gal-reference#45](https://github.com/wjatx/ptc-gal-reference/issues/45)); the other two hold in the reference implementation by construction. Normative change to one clause; no schema or wire change. |
 | `0.3.0-draft` | 2026-10-02 | Corrects defects in the ledger's integrity contract, each found by attacking the reference implementation and each a gap in this specification as well as in the code. (1) §4.3 left a record's direction to the state machine, so a `demotion` or `lapse` that raised a level was constructible by anything that did not pass through it; the direction is now a shape rule (§4.3, §6.2, **GAL-17**). (2) §6.10 adds continuity: a record the evaluator signs starts from the level the ledger held immediately before it, and a break is an un-waivable finding (**GAL-37**). (3) §6.10 and **GAL-38** exempted records dated before signing was adopted, which an unsigned planted record could claim by choosing its date; no record is now excused by anything it says about itself, and unsigned history is acknowledged per record or re-minted. (4) §6.11 and **GAL-32** require a finding about a stored record to bind that record's stored bytes, so an acknowledgment cannot cover a record that replaced the one it was issued for. (5) §6.10 no longer says a signed record proves who proposed and who ratified: it is the issuer's statement about identities it authenticated. Adds two requirements marked NOT YET IMPLEMENTED: an acknowledgment carries a term (§6.11, GAL-32), and removal and rollback are detectable (§6.11, **GAL-31**), which §6.11 already asserted and record signatures do not provide. Editorial, with no change of requirement: the body text no longer uses dashes as punctuation, and the inline marker's short form changes with that, separating the issue number with a comma (`(not yet implemented, #NNN)`) where it used a dash. |
+| `0.3.1-draft` | 2026-10-02 | Closes a gap in the ledger's transition validity for records the issuer signs, found while triaging the reference implementation's markers. 0.3.0 made direction a shape rule and continuity an audit rule for the evaluator's records only; a `promotion` that skips a rung was refused by the ceremony but constructible and parseable outside it, and a `promotion` or `tightening` that broke continuity with the ledger went unreported. §4.3 and **GAL-17** now refuse a `promotion` whose `toLevel` is not exactly one rung above its `fromLevel` wherever a record is constructed or parsed, and §6.10 and **GAL-37** extend continuity to every record after a coordinate's first. Both are marked NOT YET IMPLEMENTED (tracking: [ptc-gal-reference#159](https://github.com/wjatx/ptc-gal-reference/issues/159)). Normative change to two clauses; no schema or wire change. |
 
 ### 10.2 Reference implementation
 
