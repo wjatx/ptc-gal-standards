@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| **Version** | `0.3.1-draft` |
+| **Version** | `0.4.0-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
-| **Date** | 2026-10-02 |
+| **Date** | 2026-10-03 |
 | **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
 | **Author** | Wes Jackson (Red Hat) |
 | **Copyright** | © 2026 Red Hat, Inc. |
@@ -294,9 +294,15 @@ gate term (§6.13).
 |---|---|---|
 | `taint-bit` | A single derived taint flag propagates | Correct gating *if the sender is trusted* |
 | `lineage` | A full (unsigned) provenance chain propagates; the receiver derives its own taint | Approval-gated action |
-| `signed-lineage` | The chain is signed and receiver-verified; the receiver cannot be lied to | Eligibility for acting-autonomy rungs |
+| `signed-lineage` | The chain is signed and receiver-verified, and the receiver has on record, for every signing key, that the signer's agent cannot reach it; forging a chain takes the key | Eligibility for acting-autonomy rungs |
 
 Ordering is strict: `taint-bit` < `lineage` < `signed-lineage`.
+
+`signed-lineage` carries an **evidence class**, defined by PTC with the tier: `declared` where
+the receiver's record of signer key custody is an operator's statement that nothing has
+checked, `attested` (reserved in the current PTC draft) where it rests on evidence the receiver
+verified. GAL does not define the classes. It carries the class onto whatever the maturity
+licenses (§6.13).
 
 ---
 
@@ -946,6 +952,18 @@ approval-gated floor, reachable as the Recommend-origin grant-creating first pro
 evidence gate of §6.4.1 still applies. PTC supplies the proof; GAL moves the state; the
 ceiling is enforced in the predicate, not left to judgment.
 
+**The ceiling inherits the evidence class.** PTC defines `signed-lineage` by a verified
+signature together with the receiver's record that each signing key is held where the signer's
+agent cannot reach it, and it requires that record to carry an evidence class (§4.5). A
+promotion licensed at `signed-lineage` rests on that record, so it rests on the record's class.
+The predicate text bound into a `promotion` record whose target is an acting rung MUST state
+the maturity it was licensed at and that maturity's evidence class, and the ratifier MUST be
+shown both before ratifying. Where the class is `declared`, the ceiling was met on a recorded
+assumption about the signing peers, and neither the record nor any conformance claim citing it
+may present the maturity as verified.
+
+> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #21). Applies to **stating the evidence class in the predicate text and showing it to the ratifier**: the reference implementation's maturity is a proposer assertion that carries no class.
+
 ### 6.14 The drill obligation
 
 Demotion is a safety mechanism, and an untested safety mechanism is a liability. Before a
@@ -990,7 +1008,7 @@ satisfiable by a third party holding read-only access.
 - **GAL-17** Structurally invalid transitions SHALL be unconstructible (typed refusal), including any demotion target of `out-of-loop`. A `demotion` or `lapse` record whose `toLevel` ranks above its `fromLevel`, and a `promotion` record whose `toLevel` is not exactly one rung above its `fromLevel`, SHALL be refused wherever a record is constructed or parsed, not only on the write path (the `promotion` half: not yet implemented, #159).
 - **GAL-18** Ledger records SHALL be signed per §6.10 (workload-identity key, envelope hash bound); the issuer SHALL refuse unsigned or half-configured storage absent an explicit, recorded override.
 - **GAL-19** Grant and ledger writes SHALL be conditional, and **no failure SHALL leave a raised grant without its ledger record**. Writing the record before the grant mutation satisfies this by ordering; committing both as one atomic transaction satisfies it by admitting no interruption. An implementation SHALL state which it provides.
-- **GAL-20** Promotions to `on-loop` or `out-of-loop` SHALL require `signed-lineage` provenance maturity as a deterministic predicate term; `in-loop` as a target SHALL carry no provenance ceiling.
+- **GAL-20** Promotions to `on-loop` or `out-of-loop` SHALL require `signed-lineage` provenance maturity as a deterministic predicate term; `in-loop` as a target SHALL carry no provenance ceiling. The predicate text on a `promotion` record whose target is an acting rung SHALL state the maturity it was licensed at and that maturity's evidence class as PTC defines it, and the ratifier SHALL be shown both (stating and showing the evidence class: not yet implemented, #21).
 
 ### 7.3 Enforcer clauses
 
@@ -1226,6 +1244,7 @@ nothing.
 | `0.2.10-draft` | 2026-09-29 | Amends §4.1 and **GAL-36** to agree with `draft-jackson-wimse-evaluation-02` §3.1 and §4.3, which cites GAL-36 as the source of its consumption rule and had moved past it. Three changes. The frozen call includes the authority it was evaluated under, and an enforcement point must be able to verify that the authority a call is released under is equivalent to the authority approved; the mechanism is left open. Rejection means only the terminal disposition, so a deferral or a request for changes consumes nothing. Consumption is keyed on closure, never on execution outcome, so an indeterminate outcome after release does not return the approval to pending. The authority-equivalence half is marked NOT YET IMPLEMENTED (tracking: [ptc-gal-reference#45](https://github.com/wjatx/ptc-gal-reference/issues/45)); the other two hold in the reference implementation by construction. Normative change to one clause; no schema or wire change. |
 | `0.3.0-draft` | 2026-10-02 | Corrects defects in the ledger's integrity contract, each found by attacking the reference implementation and each a gap in this specification as well as in the code. (1) §4.3 left a record's direction to the state machine, so a `demotion` or `lapse` that raised a level was constructible by anything that did not pass through it; the direction is now a shape rule (§4.3, §6.2, **GAL-17**). (2) §6.10 adds continuity: a record the evaluator signs starts from the level the ledger held immediately before it, and a break is an un-waivable finding (**GAL-37**). (3) §6.10 and **GAL-38** exempted records dated before signing was adopted, which an unsigned planted record could claim by choosing its date; no record is now excused by anything it says about itself, and unsigned history is acknowledged per record or re-minted. (4) §6.11 and **GAL-32** require a finding about a stored record to bind that record's stored bytes, so an acknowledgment cannot cover a record that replaced the one it was issued for. (5) §6.10 no longer says a signed record proves who proposed and who ratified: it is the issuer's statement about identities it authenticated. Adds two requirements marked NOT YET IMPLEMENTED: an acknowledgment carries a term (§6.11, GAL-32), and removal and rollback are detectable (§6.11, **GAL-31**), which §6.11 already asserted and record signatures do not provide. Editorial, with no change of requirement: the body text no longer uses dashes as punctuation, and the inline marker's short form changes with that, separating the issue number with a comma (`(not yet implemented, #NNN)`) where it used a dash. |
 | `0.3.1-draft` | 2026-10-02 | Closes a gap in the ledger's transition validity for records the issuer signs, found while triaging the reference implementation's markers. 0.3.0 made direction a shape rule and continuity an audit rule for the evaluator's records only; a `promotion` that skips a rung was refused by the ceremony but constructible and parseable outside it, and a `promotion` or `tightening` that broke continuity with the ledger went unreported. §4.3 and **GAL-17** now refuse a `promotion` whose `toLevel` is not exactly one rung above its `fromLevel` wherever a record is constructed or parsed, and §6.10 and **GAL-37** extend continuity to every record after a coordinate's first. Both are marked NOT YET IMPLEMENTED (tracking: [ptc-gal-reference#159](https://github.com/wjatx/ptc-gal-reference/issues/159)). Normative change to two clauses; no schema or wire change. |
+| `0.4.0-draft` | 2026-10-03 | Follows PTC `0.4.0-draft`, which redefines the `signed-lineage` tier: a verified signature no longer suffices, and the receiver must have on record, per signing key, that the signer holds it where its own agent cannot reach it, with the evidence class of that record (`declared` or `attested`). §4.5 restates the tier, which had said "the receiver cannot be lied to", and introduces the evidence class. §6.13 and **GAL-20** make the ceiling inherit it: a promotion into an acting rung states the maturity it was licensed at and that maturity's evidence class in its predicate text, and the ratifier is shown both, so a ceiling met on a `declared` record is never presented as verified. That requirement is normative ahead of the reference implementation and marked (tracking #21). No object or wire change. |
 
 ### 10.2 Reference implementation
 

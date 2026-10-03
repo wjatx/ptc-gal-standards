@@ -57,7 +57,18 @@ weakened to match the reference implementation; PTC states that marker conventio
 numbering is unchanged in both. The same adversary-keyed framing #342 fixed in GAL is still live in
 PTC §9 item 6.
 
-**Both specifications are now at `0.3.1-draft` (2026-10-02).** GAL extends two of 0.3.0's
+**Both specifications are now at `0.4.0-draft` (2026-10-03).** PTC redefines tier 3 of its
+provenance-maturity ladder, which said "the receiver cannot be lied to" and was defined only by
+what the chain carries. Where a signer's key is within reach of its own agent, that agent can forge
+a chain that verifies. A receiver now records, for each verification key, whether the signer holds
+the key where its agent cannot reach it, and the evidence class of that record (PTC §7.1, PTC-48).
+A verified chain reaches tier 3 only when every signing key is so recorded. In this version the
+class is always `declared`: an operator's statement that the receiver has not checked. `attested`
+is reserved, and §1.3 names the attestation work that would produce it. GAL's ceiling inherits the
+class: a promotion into an acting rung states its maturity and that maturity's evidence class, and
+the ratifier is shown both (GAL-20, marked NOT YET IMPLEMENTED).
+
+**`0.3.1-draft` (2026-10-02).** GAL extends two of 0.3.0's
 corrections to the records the issuer signs: a promotion that skips a rung is refused wherever a
 record is parsed, not only by the ceremony (GAL-17), and every record must start from the level the
 ledger held before it, whichever role signed it (GAL-37). Both are marked NOT YET IMPLEMENTED.

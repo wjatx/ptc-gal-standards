@@ -1,7 +1,7 @@
 # PTC — Provenance & Trust Context, Specification
 
-**Version:** 0.3.1-draft
-**Date:** 2026-10-02
+**Version:** 0.4.0-draft
+**Date:** 2026-10-03
 **Status:** Draft for Linux Foundation agent-standards discussion. Wire schemas may change before
 1.0; see Open Problems and Future Extensions.
 **Working group:** LF Edge + Agentic AI Foundation (AAIF)
@@ -61,6 +61,19 @@ reach tools; A2A is how agents reach agents; PTC is how trust travels across bot
   attestations (tracked as reference-implementation issue [#13](https://github.com/wjatx/ptc-gal-reference/issues/13)).
 - **Selective content disclosure.** The provenance chain is a contentless index; drill-down to
   upstream source content with least-disclosure semantics (SD-JWT-VC) is reserved.
+- **Key-custody attestation at enrolment.** Tier 3 rests on a receiver's record of where a
+  signer's key sits (§7.1), and in this version that record is `declared`: the receiver checks
+  nothing. Evidence a receiver can check is a future extension. Its shape is a signing key
+  generated in hardware or a managed key service that attests the key cannot be exported, with
+  the attestation checked once, when the key is enrolled; TPM key certification, platform key
+  attestation and WebAuthn attestation are the precedents. An attestation of non-exportability
+  alone will not be sufficient, because an agent that can make the key's holder sign has no need
+  to export anything: the attestation has to cover the key's use policy, binding signing to the
+  broker's code identity. The evidence class `attested` (§7.1) is reserved for this.
+- **Remote attestation of the signer's deployment.** Evidence checked at enrolment does not
+  detect a signer whose arrangement later drifts from what was enrolled. Fresh evidence per
+  session, in the manner of the RATS architecture (RFC 9334) with claims carried in an Entity
+  Attestation Token (RFC 9711), is reserved.
 
 ## 2. Terminology and conformance language
 
@@ -546,7 +559,9 @@ own trust map.
   namespace serving as a placeholder and is expressly **not** proposed as the normative value.
 - **Broker-keyed.** The private key is the broker's workload identity (SPIFFE/WIMSE substrate
   RECOMMENDED; DID fallback), resolved by the broker at start-up, never present in the agent
-  image and never a caller assertion: **the agent cannot sign.**
+  image and never a caller assertion: **the agent cannot sign.** This is a requirement on the Producer,
+  and nothing in a chain shows a Receiver whether it is met. What a Receiver records about it,
+  and what follows from that record, is §7.1.
 - **Per-envelope, full cover only.** The sending broker signs the envelope as it leaves, with
   the full chain (`covers = len(provenance)`), including preserved upstream hops. A signature
   over a prefix of the chain is not a valid signature in this version: a statement over a prefix
@@ -583,6 +598,12 @@ When verification is enabled, it MUST fail closed:
   with no scope MUST be refused at configuration load, as MUST a key id enrolled twice. Without
   the scope, any enrolled peer could sign an envelope naming another peer's zone and identity,
   and the receiver would record it as verified.
+- **A verification key carries a custody record.** For each key it enrols, a receiver MUST also
+  record whether the signer holds the private key in agent-separated custody, and the evidence
+  class of that record (§7.1). A key enrolled without a custody record MUST be refused at
+  configuration load. The record has no bearing on whether a signature verifies: a chain signed
+  by a key recorded outside agent-separated custody passes or fails on the checks in this
+  section, and §7.1 holds it to tier 2.
 - **Zone ids must be distinct for the audience check to mean anything.** Two receivers that
   share a zone id and enrol the same signer key accept each other's traffic, and nothing a
   receiver can compute locally detects that. A deployment MUST give each receiver its own zone
@@ -596,6 +617,10 @@ When verification is enabled, it MUST fail closed:
 - A successful verification is recorded as evidence of a check **performed** (e.g. `sig:pass` in
   the receiver's hop evidence) only when the gate actually ran on this envelope and passed, never
   because verification is merely configured, and never for an unverified chain. Downstream consumers (§6.11) MUST NOT infer, recompute, or override these fields.
+- Where every signature on a verified chain was made by a key recorded in agent-separated
+  custody, the receiver records that too, under the same rule (only when the gate ran on this
+  envelope and passed) and in a form that names the evidence class (e.g. `custody:declared`).
+  That entry is evidence of a record **consulted**, never of a check performed on the peer.
 - Verification authenticates lineage; it does **not** clean taint. The receiver re-derives taint
   from the chain regardless of signature status.
 
@@ -778,7 +803,7 @@ ladder is normative:
 |---|---|---|
 | 1 | **taint bit** propagates | correct gating *if you trust the sender*: low-blast autonomy against simulated or sandboxed effects only |
 | 2 | full **lineage** in the chain (real origin sources carried, §6.5) | the receiver derives its own taint; a human sees the true origin: real-world action *with human approval* |
-| 3 | **signed** lineage, receiver verification ON (§6.6–§6.7) | the receiver cannot be lied to: autonomous cross-mesh high-blast action becomes eligible |
+| 3 | **signed** lineage, receiver verification ON (§6.6–§6.7), every signing key recorded in agent-separated custody (§7.1) | a chain can be forged only by a holder of its signing key, and the receiver has on record that the signer's agent is not one: autonomous cross-mesh high-blast action becomes eligible |
 
 **The join to GAL.** A capability's autonomy rung MUST NOT exceed the mesh's current provenance
 maturity. The companion GAL specification (Grant & Autonomy Lifecycle, drafted in parallel as
@@ -796,6 +821,56 @@ after-the-fact controls bound a compromise's *duration*, not a single act's blas
 response time must be matched to the blast rate of the authority it bounds. Signing raises the
 ceiling; it does not place a human inside a high-blast window, and detection MUST NOT substitute
 for one.
+
+### 7.1 Tier 3 and signer key custody
+
+A signature excludes whoever does not hold the key. Tier 3 depends on the signer's own agent
+being among the excluded. §6.6 requires that (the agent cannot sign, PTC-11), but as a property
+of the Producer, and a chain looks the same to a Receiver whether or not the Producer has it.
+Where the signing key can be read by the signer's agent, as when a broker and its agent run as
+one operating-system user, an agent under injection can produce a chain that verifies. The
+signature then excludes every party except the one it is there to exclude, and verification
+passes regardless. Tier 3 is therefore defined by a verified signature together with what the
+receiver has on record about where the signing key sits.
+
+- **Agent-separated custody.** A signer holds its key in agent-separated custody when the
+  private key is stored, and every use of it is controlled, on the far side of a boundary the
+  signer's agent cannot cross: the agent can neither read the key nor cause a signature to be
+  made other than by the broker's own outbound stamping (§6.5). The boundary is one the signer's
+  platform enforces (a separate operating-system or workload identity, a key service whose
+  signing permission only the broker holds, a hardware-held key with a use policy), never one
+  the signer's own code enforces on itself.
+- **The custody record.** For each verification key it enrols, a Receiver MUST record, in its
+  own configuration and beside the key's scope (§6.7), whether the signer holds the key in
+  agent-separated custody, and the **evidence class** of that record. A key with no custody
+  record MUST be refused at configuration load.
+- **Evidence classes.** The vocabulary is closed, with two values.
+  - `declared`: the receiver's operator recorded the custody when the key was enrolled, from
+    what was established with the peer's operator out of band. The Receiver has verified
+    nothing. A declared record turns an assumption about the peer into a written one that a
+    gate can read and an audit can question. An implementation MUST NOT record, report or
+    describe a declared record as verification of the peer.
+  - `attested`: reserved for custody evidence a receiver can check (§1.3). This version defines
+    no procedure that produces it, and a Receiver MUST refuse an `attested` record at
+    configuration load.
+- **What reaches tier 3.** A chain is at tier 3 only when verification ran on its envelope and
+  passed (§6.7), and every signature on it was made by a key recorded in agent-separated
+  custody. A verified chain signed by a key not so recorded is at tier 2. It remains verified,
+  and observer attribution (§6.11) is unchanged; it MUST NOT be counted as tier 3.
+- **A deployment's tier is the lowest tier among the chains it accepts.** A deployment is at
+  tier 3 only when verification is enabled and every verification key it enrols is recorded in
+  agent-separated custody. Enrolling one key recorded otherwise places the deployment at tier
+  2, because a grant's rung is held per capability, not per envelope, and nothing downstream of
+  the airlock separates what that key's traffic influenced from the rest.
+- **The class travels with the tier.** Whatever consumes tier 3 inherits the evidence class
+  under it. A statement that a deployment is at tier 3 MUST name the class, and where the
+  records under it differ, the weakest. In this version that is always `declared`.
+
+**What tier 3 claims under `declared`.** It claims that forging a chain takes the signing key,
+and that the receiver has written down, per key, that the signer's agent does not have it. It
+does not claim the receiver has checked. It also says nothing about a signer whose broker is
+itself compromised, which holds the key by design and is outside what any custody arrangement
+addresses (§9).
 
 ## 8. Conformance
 
@@ -839,7 +914,7 @@ One table; the **Role** column names the conformance role each clause binds ("Al
 | PTC-19 | Receiver | Sender-asserted chain labels are a floor, never a grant: a source taints the receiving turn if its chain label is `untrusted` OR the receiver's own input trust map does not trust it. | TRUST-MAPPING (consequence 2) |
 | PTC-20 | Receiver | Every provenance source is fed into the broker-held receiving turn before the worker acts. | SCHEMAS C5 |
 | PTC-21 | Receiver | Enabled verification fails closed: an envelope with no signature, an unknown signer, a `covers` other than the full chain, a `payload_type` or `sig` outside the one form of §5.5, or an invalid signature is rejected and loudly quarantined before any budget-spending gate; every present signature must pass every check; misconfigured verification fails closed loudly. | SIGNING S4, S5 |
-| PTC-22 | Receiver | Verification MAY be off; with it off, unsigned traffic passes and the deployment's maturity tier (§7) and observer attribution strength degrade accordingly: stated consequences, never silent ones (deriving the tier from whether verification is configured: not yet implemented, #21). | SIGNING S5 |
+| PTC-22 | Receiver | Verification MAY be off; with it off, unsigned traffic passes and the deployment's maturity tier (§7) and observer attribution strength degrade accordingly: stated consequences, never silent ones (deriving the tier from whether verification is configured and from the custody records of §7.1: not yet implemented, #21). | SIGNING S5 |
 | PTC-23 | Receiver | Evidence-of-check is stamped only by the gate that performed the check, only when it ran; downstream consumers never fabricate, infer, or override it. | SIGNING (gate evidence); WATCHDOG W8 |
 | PTC-24 | Receiver (gate) | The decision function is pure, deterministic, and model-free; facts are pre-resolved into a closed fact set with no model-derived field; evaluation is first-match over an ordered rule set; the matched rule is recorded (recording the matched rule: not yet implemented, #22); unmatched writes default-deny. | deterministic-gate |
 | PTC-25 | Receiver (gate) | The verb alphabet is exactly `allow` / `deny` / `transform` / `require_approval` / `abstain`; `transform` produces a substituted operation plus clamped arguments (argument clamping: not yet implemented, #16); model-authored arguments never change the verb. | deterministic-gate |
@@ -865,6 +940,7 @@ One table; the **Role** column names the conformance role each clause binds ("Al
 | PTC-45 | Receiver | An envelope is addressed to one receiver: an `audience` other than the receiver's own zone id, compared exactly, is an `audience_mismatch` drop, checked before chain verification and before deduplication and whether or not verification is enabled; the drop names no signer. | SIGNING S9; SCHEMAS C9 |
 | PTC-46 | Receiver | A verification key is scoped in the receiver's own configuration to one zone id and a set of sender identities; a signature from a known key outside its scope is rejected as invalid; an unscoped or twice-enrolled key is refused at configuration load. | SIGNING S8 |
 | PTC-47 | All | The envelope has one wire form (ASCII JSON that parses back to an equal envelope) and a bounded size (196,608 bytes as sent, 262,144 as forwarded, at most 8 signatures); an envelope outside either is refused at schema validation, before any gate records it as seen. | SCHEMAS (wire form) |
+| PTC-48 | Receiver | A verification key carries a custody record in the receiver's own configuration: whether the signer holds the private key in agent-separated custody (stored and used only across a boundary the signer's agent cannot cross), and the evidence class of that record, from the closed vocabulary `declared` / `attested`. A key enrolled without a custody record, and a record of class `attested`, are refused at configuration load. A verified chain is at tier 3 (§7) only when every signature on it was made by a key recorded in agent-separated custody, and the receiver's evidence of that names the class; a verified chain signed by any other key is at tier 2. A `declared` record is never recorded, reported or described as verification of the peer. | SIGNING S10 |
 
 ### 8.3 Origin-mapping coverage
 
@@ -872,7 +948,7 @@ One table; the **Role** column names the conformance role each clause binds ("Al
 |---|---|---|
 | EventTrigger C1–C9 and wire form | PTC-1..6, 14, 16, 20, 45, 47 | full |
 | PUBLISH P1–P8 | PTC-7..11 (P5 "no shared store" folded into §6.1 item 1; P6 "receiver re-gates everything" folded into PTC-17..20; P7 into PTC-4) | full |
-| SIGNING S1–S9 | PTC-11..13, 21..23, 45, 46 (S6 "signing ≠ correctness" carried in §9; S7 tiering is packaging doctrine, non-normative here) | full |
+| SIGNING S1–S10 | PTC-11..13, 21..23, 45, 46, 48 (S6 "signing ≠ correctness" carried in §9; S7 tiering is packaging doctrine, non-normative here) | full |
 | TRUST-MAPPING (one-way rule + consequences) | PTC-15..19, 29 | full |
 | SCREENING | PTC-29 (+ §3.6, §6.9) | full (verdict-sink observability valve is implementation-tier, unmapped) |
 | TAINT §1–§6 | PTC-26..28 (+§6.3–§6.4); §6 read-side knobs (budgets, egress bounds) are implementation-tier knobs, unmapped | full for floor; knobs partial by design |
@@ -968,6 +1044,16 @@ qualification, and conformance here is not a claim about airborne-software certi
    same fields the statement did. The rule of §6.6 (sign the envelope minus a named list) is the
    correction, and the general lesson is that a signature's coverage should be stated as what
    it leaves out.
+10. **Tier 3 rests on a record the receiver cannot check.** In this version the custody record
+    of §7.1 is `declared`: an operator's statement about a peer, written into the receiver's
+    configuration. A peer that misdescribes its arrangement, or one that changes it after
+    enrolment, is recorded as agent-separated all the same, and nothing a receiver computes
+    detects either. What the record buys is narrower and still worth having: the assumption is
+    explicit, it is per key, a gate reads it, and a peer known to keep its key within its
+    agent's reach is held to tier 2 instead of passing as tier 3 on the strength of a valid
+    signature. Checkable evidence is future work (§1.3). Separately, custody says nothing about
+    a compromised broker. The broker holds the key by design, so a signer whose broker is
+    subverted signs whatever the attacker wants; item 3 applies, and no tier addresses it.
 
 ## 10. Extensibility
 
@@ -1016,6 +1102,7 @@ minted at runtime**; carriage bindings, signature key substrates, transparency-l
 | 0.2.8-draft | 2026-09-29 | States what a refused sender learns. §6.1 and new clause **PTC-44** generalize PTC-17's silence-toward-the-sender from unmapped identities to every airlock refusal: the response discloses no gate, entry, path, signature or evaluated chain state beyond what the receiver publishes, and toward senders the airlock cannot authenticate before evaluation, every delivered envelope SHOULD receive the same response. This records as a deliberate choice the reference airlock's uniform success response, and its divergence from the permanent-refusal signal `draft-jackson-wimse-evaluation-02` §5 recommends toward an authenticated caller. Satisfied by the reference implementation as it stands; no schema or wire change. |
 | 0.3.0-draft | 2026-10-02 | **Wire change.** Corrects four defects in the signing and receiving contract, each found by attacking the reference implementation and each a gap in this specification as well as in the code. (1) §6.6 and PTC-12 enumerated the signed fields, and the list was short: the statement now binds the whole envelope except two named fields, with the raw-original digest and reference bound as a second subject. (2) §5.5 and PTC-13 allowed a signature over a chain prefix, which let a party with no key truncate a chain; every signature now covers the full chain. (3) §6.7 let any enrolled key sign for any zone and sender; new clause **PTC-46** scopes each verification key, in the receiver's configuration, to one zone and a set of sender identities. (4) Nothing named the receiver an envelope was for; new required field `audience`, new drop reason `audience_mismatch` and new clause **PTC-45** bind an envelope to one receiver's zone id, checked before verification. Also adds §5.7 and **PTC-47** (one wire form, bounded size, refused before acceptance), pins the spelling of `sig`, `payload_type` and `payload_digest`, requires a receiver to discard an inbound `sender_class` before any gate reads it, requires distinct zone ids and unshared signing keys, and adds §9.8 and §9.9. An envelope signed under 0.2.x does not verify under this version. Editorial, with no change of requirement: the body text no longer uses dashes as punctuation, and the inline marker's short form changes with that, separating the issue number with a comma (`(not yet implemented, #NNN)`) where it used a dash; §2 now says what `#NNN` stands for; one sentence in §7 is reworded. |
 | 0.3.1-draft | 2026-10-02 | Removes the NOT YET IMPLEMENTED marker from **PTC-35** and states its condition explicitly. The clause constrains a response screen where an implementation provides one, and requires none: §1 puts screening itself out of scope, and the airlock's screen in §6.9 is likewise optional. The marker reported an optional component as an unbuilt requirement. Building a response screen in the reference implementation remains tracked, without a marker, at [ptc-gal-reference#25](https://github.com/wjatx/ptc-gal-reference/issues/25). No requirement or wire change. |
+| 0.4.0-draft | 2026-10-03 | Redefines tier 3 of the provenance-maturity ladder (§7), which said "the receiver cannot be lied to" and was defined only by what the chain carries. A signature excludes whoever lacks the key, and where a signer's key is within reach of its own agent the agent can forge a chain that verifies, so a receiver verifying it can be lied to by the party the signature exists to exclude. New §7.1 and clause **PTC-48**: a receiver records, per verification key, whether the signer holds the key in agent-separated custody and the evidence class of that record (`declared` or `attested`); a verified chain reaches tier 3 only when every signing key is so recorded, a deployment's tier is the lowest among the chains it accepts, and the class travels with the tier. `declared` is a recorded assumption and verifies nothing; `attested` is reserved and refused at configuration load, and §1.3 names key-custody attestation at enrolment and remote attestation of the signer's deployment as the future extensions that would produce it. §6.6 and §6.7 point at the new section, PTC-22's marker is widened to cover deriving the tier from the custody records, and §9 gains item 10. A receiver's verification-key configuration gains a required record; no wire change. |
 
 ## 12. References
 
@@ -1035,6 +1122,9 @@ minted at runtime**; carriage bindings, signature key substrates, transparency-l
 - OAuth 2.0 Token Exchange (RFC 8693): its `sub`/`act` split between the on-behalf-of subject
   and the acting party is the precedent for binding `principal` into the signed statement (§6.6).
 - SD-JWT-VC: reserved for the future selective-disclosure content drill-down (§1.3).
+- Remote ATtestation procedureS (RATS) Architecture (RFC 9334) and the Entity Attestation Token
+  (RFC 9711): the architecture and claims format the reserved attestation extensions of §1.3
+  would build on.
 
 **Design inputs**
 
