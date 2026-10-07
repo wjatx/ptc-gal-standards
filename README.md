@@ -68,7 +68,37 @@ is reserved, and §1.3 names the attestation work that would produce it. GAL's c
 class: a promotion into an acting rung states its maturity and that maturity's evidence class, and
 the ratifier is shown both (GAL-20, marked NOT YET IMPLEMENTED).
 
-**GAL is now at `0.5.1-draft` (2026-10-07); PTC stays at `0.4.0-draft`.** The `reattestation`
+**PTC is now at `0.5.0-draft` and GAL at `0.6.0-draft` (2026-10-07).** Both add rules ahead of the
+reference implementation, each marked NOT YET IMPLEMENTED and each stated with the attack it
+prevents. The class they share is the confused deputy: a component that holds authority is induced
+to use it for a party that holds none.
+
+- **What a refused sender learns** (PTC §6.1, PTC-44). A sender the receiver authenticated and
+  mapped learns whether a refusal of authority is permanent or transient, and nothing more. Every
+  other sender gets a uniform response, and a refusal on content reads as acceptance to everyone.
+  A stranger gets no map of the receiver's trust configuration, and a compromised peer gets no
+  feedback on which payload got through.
+- **Delegation does not launder** (PTC §6.3, PTC-51). A context an agent spawns outside its zone,
+  or schedules for later, starts at least as tainted as the turn that caused it. Otherwise an agent
+  that has read planted content hands the task to a worker whose turn is clean.
+- **A destination the agent composed** (PTC §6.4, PTC-52). On a tainted turn, a call whose
+  destination the agent composed is escalated like an external write, as a control a deployment may
+  leave off. This narrows request forgery steered by injected content. It does not stop request
+  forgery inside a tool server, which only containment closes, and the specification says so.
+- **Time** (PTC §6.13, PTC-49 and PTC-50; GAL §6.7.6 and §6.15, GAL-42 and GAL-43). Clock skew is
+  applied toward less authority and never symmetrically, and every fetched input a decision
+  depended on has a recorded as-of instant and a declared maximum age.
+- **An approval that expires undecided** (PTC §6.12, PTC-53) is recorded as expired, is told apart
+  from a human denial, and is reported to the approver while a flood alarm is raised.
+- **Issuer standing** (GAL §6.10, GAL-41). A grant whose issuer's key has been withdrawn is
+  enforced at its last safe level; a verifier in another domain, which holds no such level, treats
+  the path as conferring nothing. Rotation is not withdrawal.
+
+GAL also states that its lifecycle is proven by test and has no proven-in-use evidence (§3), and
+GAL-18 and three PTC clauses gain markers an audit found they needed. Across both specifications 42
+of 96 clauses are now marked.
+
+**GAL `0.5.1-draft` (2026-10-07).** The `reattestation`
 record is built in the reference implementation, so its NOT YET IMPLEMENTED markers come off.
 Building it found that GAL-15 forbade any rewrite of a grant at an unchanged level, which
 contradicted the demotion that fires on a grant already at its floor. The clause now states the
