@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| **Version** | `0.5.0-draft` |
+| **Version** | `0.5.1-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
-| **Date** | 2026-10-04 |
+| **Date** | 2026-10-07 |
 | **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
 | **Author** | Wes Jackson (Red Hat) |
 | **Copyright** | © 2026 Red Hat, Inc. |
@@ -255,9 +255,9 @@ sixth, `reattestation`, records a write that changes none.
 | `bootstrap` | The sanctioned seed: first creation of a grant outside the propose/ratify ceremony | `fromLevel` null; maker ≠ checker NOT enforced (single-operator seed is sanctioned); `predicate` null; `triggeredBy` empty; `demotionReason` null |
 | `tightening` | Voluntary any-level → `in-loop` move (§6.3) | `toLevel` = `"in-loop"`; maker ≠ checker NOT enforced; `predicate` null; `triggeredBy` empty; `demotionReason` null |
 | `lapse` | A certification term expired (§6.7.6) | `toLevel` = the grant's `lastSafeLevel`; `ratifiedBy` is the system evaluator identity; `triggeredBy` empty: a lapse is an absence, not a fired condition; `demotionReason` = `"pending-evidence"`; `predicate` null; `toLevel` MUST NOT rank above `fromLevel` and MUST NOT be `out-of-loop` |
-| `reattestation` | A grant re-issued at its level under a changed envelope (§6.6) (not yet implemented, #164) | `fromLevel` and `toLevel` both equal the grant's level; `ratifiedBy` is the identity that re-attested; maker ≠ checker NOT enforced; `predicate` null; `triggeredBy` empty; `demotionReason` null; `certifiedUntil` null |
+| `reattestation` | A grant re-issued at its level under a changed envelope (§6.6) | `fromLevel` and `toLevel` both equal the grant's level; `ratifiedBy` is the identity that re-attested; maker ≠ checker NOT enforced; `predicate` null; `triggeredBy` empty; `demotionReason` null; `certifiedUntil` null |
 
-The first five record types are implemented. `reattestation` is not yet (#164).
+All six record types are implemented.
 
 A `reattestation` record neither earns a level nor lowers one. A reader that derives a
 coordinate's level from its ledger, or looks for the record that raised a grant to its current
@@ -372,7 +372,7 @@ path writes a grant without appending the record that accounts for the write.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `recordType` | `"promotion"` \| `"demotion"` \| `"bootstrap"` \| `"tightening"` \| `"lapse"` \| `"reattestation"` (not yet implemented, #164) | yes | The record type; default `"promotion"`. Shape rules per §4.3. |
+| `recordType` | `"promotion"` \| `"demotion"` \| `"bootstrap"` \| `"tightening"` \| `"lapse"` \| `"reattestation"` | yes | The record type; default `"promotion"`. Shape rules per §4.3. |
 | `actionClass` | string | yes | The action class of the grant the record accounts for. |
 | `principal` | Principal | yes | For whom. |
 | `fromLevel` | level \| null | yes | `null` means the Recommend rung: the agent held no grant, and this record's write is the grant's creation (first promotion or bootstrap). |
@@ -387,8 +387,6 @@ path writes a grant without appending the record that accounts for the write.
 | `demotionReason` | `"failing"` \| `"pending-evidence"` \| null | demotion- and lapse-typed only | Set on `demotion` records; `"pending-evidence"` on `lapse` records (§4.3); null otherwise. |
 | `certifiedUntil` | string (ISO-8601 UTC) \| null | no | On a `promotion` record, the certification term the checker ratified; binding the term into the signed record is what makes it part of what the checker is accountable for (§6.10). On a `lapse` record, the term that expired, which is the instant enforcement fell (§6.7.6) (not yet implemented, #165). MUST be null on every other type. Omitted from the canonical form when null (§3). |
 | `ts` | string (ISO-8601 UTC) | yes | The instant the writer appended this record, and nothing else; see below. |
-
-> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #164). Applies to the **`reattestation` record type**; the other five types are implemented.
 
 > **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #165). Applies to **`certifiedUntil` on a `lapse` record**; the field on a `promotion` record is implemented.
 
@@ -690,8 +688,6 @@ load, failing toward writing nothing, never toward minting authority the enforce
 
 **Re-attestation appends a record.**
 
-> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #164).
-
 A re-attestation MUST append one `reattestation`-typed ledger record (§4.3), signed under the
 issuer role (§6.10), carrying the new `envelopeHash` and the identity that re-attested. The
 record and the grant write carry the same `ts` (§5.2) and are subject to the write discipline of
@@ -707,9 +703,19 @@ with no level change had no place on it. The record's type is what explains it. 
 over a `reattestation` record when deriving a level (§4.3), and it does not restart dwell
 (§6.8).
 
-There is no other same-level write. An implementation MUST NOT provide a path that rewrites a
-grant's `evidence`, `promotedBy` or `ts` at an unchanged level outside re-attestation; fresh
-evidence enters a grant through the promotion ceremony.
+No write to a grant goes unrecorded. A demotion whose target equals the grant's current level
+leaves the level where it was and appends a `demotion` record, as any demotion does. An
+implementation MUST NOT provide a path that rewrites a grant and appends no record; fresh
+evidence enters a grant through the promotion ceremony. A `reattestation` record MUST be signed
+under the issuer role, and the bootstrap override of §6.10 does not apply to it.
+
+What these two rules prevent is a grant brought back to acting authority with nobody
+accountable for it. A grant quarantined by an envelope change stays refused until it is
+re-attested. If re-attestation could run unsigned, or a second path could rewrite the grant
+with no record, then anyone able to reach that path (an operator session with no ceremony key,
+a compromised deployment job, a writer on the grant store) could return the grant to its level
+and leave the signed ledger showing nothing. The requirement makes that act cost the issuer's
+key and leave a record under it.
 
 ### 6.7 Demotion — automatic, deterministic, no model
 
@@ -863,7 +869,7 @@ OPTIONAL transparency-log anchor for high-blast promotions is a knob shipping OF
 
 **Signing authority is scoped by record type, and the scoping is what makes §6.7.2 hold.**
 Records that raise or re-license authority (`promotion`, `bootstrap`, `tightening`, and
-`reattestation` (not yet implemented, #164)) MUST be
+`reattestation`) MUST be
 signed by the issuer's key. Records the automatic evaluator writes (`demotion`, `lapse`) MUST
 be signed by a separate evaluator key, and no identity may hold both. Satisfying "every record
 is signed" by giving the evaluator the issuer's key would let the side that runs with no human
@@ -1080,7 +1086,7 @@ satisfiable by a third party holding read-only access.
 - **GAL-12** The evidence window's span and period SHALL be bound under the proposal's integrity mechanism; covered-distribution soundness SHALL be recorded as an explicit proposer assertion.
 - **GAL-13** Any level → `in-loop` SHALL be permitted without ceremony and SHALL append a `tightening`-typed record.
 - **GAL-14** Grant creation outside the ceremony SHALL emit a `bootstrap`-typed record; no grant SHALL lack a ledger counterpart (both, on the runtime bootstrap path: not yet implemented, #27).
-- **GAL-15** On envelope change, the grant SHALL be re-attested at its prior level under human ratification, and the re-attestation SHALL refuse on configuration mismatch, failing toward writing nothing. A re-attestation SHALL append exactly one `reattestation`-typed record, signed under the issuer role and carrying the same `ts` as the grant write, and SHALL change nothing on the grant but `envelopeHash`, `promotedBy` and `ts`; no other path SHALL rewrite a grant at an unchanged level (the record, and the removal of the other path: not yet implemented, #164).
+- **GAL-15** On envelope change, the grant SHALL be re-attested at its prior level under human ratification, and the re-attestation SHALL refuse on configuration mismatch, failing toward writing nothing. A re-attestation SHALL append exactly one `reattestation`-typed record, signed under the issuer role and carrying the same `ts` as the grant write, and SHALL change nothing on the grant but `envelopeHash`, `promotedBy` and `ts`; a re-attestation SHALL be refused when no issuer signing key is configured; no path SHALL rewrite a grant without appending the record that accounts for the write.
 - **GAL-16** Every level change SHALL append exactly one typed record on one append-only ledger; records SHALL never be overwritten, mutated, or removed.
 - **GAL-17** Structurally invalid transitions SHALL be unconstructible (typed refusal), including any demotion target of `out-of-loop`. A `demotion` or `lapse` record whose `toLevel` ranks above its `fromLevel`, and a `promotion` record whose `toLevel` is not exactly one rung above its `fromLevel`, SHALL be refused wherever a record is constructed or parsed, not only on the write path (the `promotion` half: not yet implemented, #159).
 - **GAL-18** Ledger records SHALL be signed per §6.10 (workload-identity key, envelope hash bound); the issuer SHALL refuse unsigned or half-configured storage absent an explicit, recorded override.
@@ -1138,7 +1144,7 @@ satisfiable by a third party holding read-only access.
 | GAL-12 | GAL.md §9 (covered assertion recorded); multi-period window binding (#207/#212) |
 | GAL-13 | GAL.md §4 (any-level → in-loop); SCHEMAS §7 `tightening` |
 | GAL-14 | GAL.md §5 (`seed` emits bootstrap record); SCHEMAS §7 `bootstrap`; L2 |
-| GAL-15 | GAL.md §5 (re-attestation carries prior level); grant-lifecycle §audit (#199 refusal seam). Reversed in 0.5.0-draft: re-attestation appends a record (§6.6; tracking #164). |
+| GAL-15 | GAL.md §5 (re-attestation carries prior level); grant-lifecycle §audit (#199 refusal seam). Reversed in 0.5.0-draft: re-attestation appends a record (§6.6), built in the reference implementation under #164. Amended in 0.5.1-draft: the rule is no write without a record, and the record is always issuer-signed. |
 | GAL-16 | SCHEMAS §7 (append-only ledger); L2 |
 | GAL-17 | L1 (transition unconstructibility); grant-lifecycle §ladder |
 | GAL-18 | GAL.md §8; tce-signing-shape.md; grant-lifecycle §audit (refuse-unsigned) |
@@ -1325,6 +1331,7 @@ nothing.
 | `0.3.1-draft` | 2026-10-02 | Closes a gap in the ledger's transition validity for records the issuer signs, found while triaging the reference implementation's markers. 0.3.0 made direction a shape rule and continuity an audit rule for the evaluator's records only; a `promotion` that skips a rung was refused by the ceremony but constructible and parseable outside it, and a `promotion` or `tightening` that broke continuity with the ledger went unreported. §4.3 and **GAL-17** now refuse a `promotion` whose `toLevel` is not exactly one rung above its `fromLevel` wherever a record is constructed or parsed, and §6.10 and **GAL-37** extend continuity to every record after a coordinate's first. Both are marked NOT YET IMPLEMENTED (tracking: [ptc-gal-reference#159](https://github.com/wjatx/ptc-gal-reference/issues/159)). Normative change to two clauses; no schema or wire change. |
 | `0.4.0-draft` | 2026-10-03 | Follows PTC `0.4.0-draft`, which redefines the `signed-lineage` tier: a verified signature no longer suffices, and the receiver must have on record, per signing key, that the signer holds it where its own agent cannot reach it, with the evidence class of that record (`declared` or `attested`). §4.5 restates the tier, which had said "the receiver cannot be lied to", and introduces the evidence class. §6.13 and **GAL-20** make the ceiling inherit it: a promotion into an acting rung states the maturity it was licensed at and that maturity's evidence class in its predicate text, and the ratifier is shown both, so a ceiling met on a `declared` record is never presented as verified. That requirement is normative ahead of the reference implementation and marked (tracking #21). No object or wire change. |
 | `0.5.0-draft` | 2026-10-04 | The ledger journals every write to a grant, and a timestamp says one thing. Answers [ptc-gal-standards#2](https://github.com/wjatx/ptc-gal-standards/issues/2), which asked what a ledger record's `ts` denotes for each record type. (1) §5.2 states one rule with a per-type table: `ts` is the instant the writer appended the record, later than every record at its coordinate, never backdated, and it does not establish the time of any event not separately retained. §5.1 had defined the grant's `ts` as "when this level took effect", which did not hold after a lapse or a re-attestation; it is now the instant of the last write, equal to the record's. §6.7.6's evaluation-instant rule is unchanged. (2) **GAL-15** and §6.6 are reversed: re-attestation appends a record, of a sixth type, `reattestation` (§4.3), issuer-signed, with no predicate, no triggers and no level change. 0.2-series drafts said it appended none, for two reasons. The first was that the ledger records level changes, so an entry no transition explains had no place on it; the record's type is what explains it, and without one the signed ledger could not say who rewrote the grant beside it. The second was that a record "would make the re-promotion reference ambiguous", a phrase this specification never defined. It came from the reference implementation's name for the level a later promotion climbs back toward, and the concern it stands for is a reader mistaking a same-level record for the one that earned the level; §4.3 now tells every such reader to pass over the type. The same clause forbids any other same-level rewrite of a grant. (3) A `lapse` record may carry `certifiedUntil`, the term that expired, so the instant enforcement fell is a field and no reader has to parse `evidence` for it (§5.2, §6.7.6). (4) New audit clause **GAL-40** (§6.11): a grant's `ts` equals the `ts` of the latest ledger record at its coordinate. (5) §6.8: dwell is measured from ledger records and a re-attestation does not restart it. The `reattestation` record, the lapse field and the audit rule are marked NOT YET IMPLEMENTED (tracking: [ptc-gal-reference#164](https://github.com/wjatx/ptc-gal-reference/issues/164), [#165](https://github.com/wjatx/ptc-gal-reference/issues/165), [#166](https://github.com/wjatx/ptc-gal-reference/issues/166)). Also corrects §10.2's clause count, which had not been updated since the clause set grew. |
+| `0.5.1-draft` | 2026-10-07 | The `reattestation` record is built in the reference implementation ([ptc-gal-reference#164](https://github.com/wjatx/ptc-gal-reference/issues/164)), so its NOT YET IMPLEMENTED markers come off in §4.3, §5.2, §6.6, §6.10 and **GAL-15**. Building it found that GAL-15's last clause, "no other path SHALL rewrite a grant at an unchanged level", contradicted §4.3, which lets a `demotion` record's `toLevel` equal its `fromLevel`: a demotion that fires on a grant already at its floor rewrites the grant at an unchanged level and appends a `demotion` record. The clause and §6.6 now state the rule that was meant: no write to a grant goes unrecorded. Two requirements are added to the same clause. A `reattestation` record is always signed under the issuer role, and a re-attestation is refused when no issuer signing key is configured; the bootstrap override of §6.10 does not extend to it, because re-attestation returns a quarantined grant to acting authority and an unsigned record of that names nobody who can be held to it. §6.6 states what the two rules prevent. The markers for [#165](https://github.com/wjatx/ptc-gal-reference/issues/165) and [#166](https://github.com/wjatx/ptc-gal-reference/issues/166) are unchanged. |
 
 ### 10.2 Reference implementation
 
@@ -1336,7 +1343,7 @@ L1–L8 lifecycle conformance suite seeds this specification's conformance tests
 implementation, clone these specifications into a `spec/` directory at its root, and run its
 test suite: the
 tests that compare specification text against the shipped schemas then execute rather than skip,
-and its continuous integration does exactly that on every commit. Across both specifications 30 of
+and its continuous integration does exactly that on every commit. Across both specifications 29 of
 88 conformance clauses are marked normative ahead of the implementation and individually tracked
 (§3); none has been outgrown by the implementation. What a reader can check from a checkout, with
 no cloud account and no credential, is the whole of what is claimed here.

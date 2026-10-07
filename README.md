@@ -68,7 +68,16 @@ is reserved, and §1.3 names the attestation work that would produce it. GAL's c
 class: a promotion into an acting rung states its maturity and that maturity's evidence class, and
 the ratifier is shown both (GAL-20, marked NOT YET IMPLEMENTED).
 
-**GAL is now at `0.5.0-draft` (2026-10-04); PTC stays at `0.4.0-draft`.** The revision answers
+**GAL is now at `0.5.1-draft` (2026-10-07); PTC stays at `0.4.0-draft`.** The `reattestation`
+record is built in the reference implementation, so its NOT YET IMPLEMENTED markers come off.
+Building it found that GAL-15 forbade any rewrite of a grant at an unchanged level, which
+contradicted the demotion that fires on a grant already at its floor. The clause now states the
+rule that was meant: no write to a grant goes unrecorded. A re-attestation is also always signed
+under the issuer role and is refused when no issuer signing key is configured, so that a
+quarantined grant cannot be returned to acting authority with nobody accountable for it (GAL §6.6,
+GAL-15).
+
+**`0.5.0-draft` (2026-10-04).** The revision answers
 [#2](https://github.com/wjatx/ptc-gal-standards/issues/2), which asked what a ledger record's `ts`
 denotes. A record's `ts` is the instant its writer appended it, for every record type, and it does
 not establish the time of any event that was not separately retained (GAL §5.2, GAL-40). The
@@ -76,7 +85,7 @@ ledger now journals every write to a grant: re-attestation after an envelope cha
 record of a sixth type, `reattestation`, where earlier drafts said it appended none (GAL §6.6,
 GAL-15). A `lapse` record may carry the term that expired, and an auditor reports a grant whose
 `ts` its latest ledger record does not match (GAL §6.11). The new record type, the lapse field and
-the audit rule are marked NOT YET IMPLEMENTED.
+the audit rule were marked NOT YET IMPLEMENTED; the record type's marker came off in `0.5.1-draft`.
 
 **`0.3.1-draft` (2026-10-02).** GAL extends two of 0.3.0's
 corrections to the records the issuer signs: a promotion that skips a rung is refused wherever a
