@@ -68,7 +68,18 @@ is reserved, and §1.3 names the attestation work that would produce it. GAL's c
 class: a promotion into an acting rung states its maturity and that maturity's evidence class, and
 the ratifier is shown both (GAL-20, marked NOT YET IMPLEMENTED).
 
-**PTC is now at `0.5.0-draft` and GAL at `0.6.0-draft` (2026-10-07).** Both add rules ahead of the
+**PTC is now at `0.5.1-draft` and GAL at `0.6.1-draft` (2026-10-07).** Three changes since the
+revision below. A decision is good no longer than its shortest-lived input: the decision point
+records the earliest instant at which any input it depended on passes its maximum age, and a call
+held on the decision or carried on from it is evaluated again past that instant (PTC §6.13,
+PTC-50; GAL §6.15, GAL-43). A new audit clause holds a lapse record's term to the one its latest
+promotion ratified, so a planted lapse record cannot misstate how long a grant was certified
+(GAL §6.11, GAL-44). And the reference implementation built the lapse record's term field and the
+audit rule that holds a grant's `ts` to its latest ledger record, so their markers come off; GAL
+§6.11 now says an existing ledger is brought into line with that rule by signed acknowledgment
+and by nothing else. 42 of 97 clauses are marked.
+
+**PTC `0.5.0-draft` and GAL `0.6.0-draft` (2026-10-07).** Both add rules ahead of the
 reference implementation, each marked NOT YET IMPLEMENTED and each stated with the attack it
 prevents. The class they share is the confused deputy: a component that holds authority is induced
 to use it for a party that holds none.
@@ -95,8 +106,7 @@ to use it for a party that holds none.
   the path as conferring nothing. Rotation is not withdrawal.
 
 GAL also states that its lifecycle is proven by test and has no proven-in-use evidence (§3), and
-GAL-18 and three PTC clauses gain markers an audit found they needed. Across both specifications 42
-of 96 clauses are now marked.
+GAL-18 and three PTC clauses gain markers an audit found they needed. Across both specifications 42 of 96 clauses were marked at that revision.
 
 **GAL `0.5.1-draft` (2026-10-07).** The `reattestation`
 record is built in the reference implementation, so its NOT YET IMPLEMENTED markers come off.
