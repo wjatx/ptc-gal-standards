@@ -68,7 +68,16 @@ is reserved, and §1.3 names the attestation work that would produce it. GAL's c
 class: a promotion into an acting rung states its maturity and that maturity's evidence class, and
 the ratifier is shown both (GAL-20, marked NOT YET IMPLEMENTED).
 
-**PTC is now at `0.6.0-draft` and GAL at `0.7.0-draft` (2026-10-12).** One new rule, two
+**PTC is now at `0.6.1-draft` and GAL at `0.8.0-draft` (2026-10-12, later the same day).** The
+reference implementation built the last two clauses of the batch, delegation does not launder
+(PTC-51) and issuer standing (GAL-41), so their markers come off. GAL gains a seventh record type,
+`withdrawal`: the evaluator's record of a grant lowered because the issuer key its level rested on
+was withdrawn, written for a withdrawn key and never for standing that merely cannot be
+established, so the ledger does not disagree with enforcement for as long as nobody looks. The
+five places that named `demotion` and `lapse` as the records the evaluator writes and that may
+never raise a level now name `withdrawal` with them. 34 of 99 clauses are marked.
+
+**PTC `0.6.0-draft` and GAL `0.7.0-draft` (2026-10-12).** One new rule, two
 sharpenings and seven markers off. A held call is answered by the owner of the grant that governs
 it and by no one else: the owner is fixed when the call is held, the record of the held call
 carries it, and an answer from any other party, an `owner`-class sender for the same principal
