@@ -1,7 +1,7 @@
 # PTC — Provenance & Trust Context, Specification
 
-**Version:** 0.5.1-draft
-**Date:** 2026-10-07
+**Version:** 0.6.0-draft
+**Date:** 2026-10-12
 **Status:** Draft for Linux Foundation agent-standards discussion. Wire schemas may change before
 1.0; see Open Problems and Future Extensions.
 **Working group:** LF Edge + Agentic AI Foundation (AAIF)
@@ -146,7 +146,7 @@ mapping, and it short-circuits the pipeline as a drop.
 
 | Class | Who | What verified authenticity raises | Receiver hop label |
 |---|---|---|---|
-| `owner` | the target principal's accountable human | the full command surface: commands, questions, approval responses | `trusted` |
+| `owner` | the target principal's accountable human | the full command surface: commands, questions, and approval responses for a held call whose owner it is (§6.8) | `trusted` |
 | `peer-agent` | an authenticated peer agent the receiver has pre-declared | may wake the worker and deliver signals addressed to the mapped principal | `trusted`: the *hop* is authentic; chain-inherited taint persists untouched |
 | `external` | a verified-but-external sender | the minimum: delivery to the mapped principal, subject to every downstream gate | `untrusted`: always taints |
 
@@ -181,7 +181,7 @@ substituted operation plus clamped arguments, not a boolean).
 | `allow` | execute the call as asked |
 | `deny` | refuse the call |
 | `transform` | execute a safer variant: a substituted operation plus clamped arguments (argument clamping: not yet implemented, #16) |
-| `require_approval` | hold the call for out-of-band human ratification before execution |
+| `require_approval` | hold the call for out-of-band ratification, before execution, by the human who owns the authority it was evaluated under (§6.8) |
 | `abstain` | decline to decide; surface to a human without executing |
 
 > **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation
@@ -216,9 +216,11 @@ The closed reason vocabulary for recorded drops at the receiving airlock.
 | `unmapped` | trust mapping |
 | `principal_mismatch` | trust mapping |
 | `screen_refused` | content screen (when enabled) |
+| `not_evaluated` | chain verification or deduplication, when an input the gate fetches (the verification-key source, the deduplication store) is unavailable |
 
 A drop record MAY carry a `detail` machine code (pattern `^[a-z][a-z0-9_]{0,63}$`, never free
-text). Deduplicated replays are silent no-ops, not drops.
+text). A `not_evaluated` record MUST carry one, naming the input that was unavailable; it is the
+record of a transient refusal (§6.1). Deduplicated replays are silent no-ops, not drops.
 
 ### 3.6 Screen refuse codes
 
@@ -414,16 +416,20 @@ reads it. What a sender learns beyond that depends on two things the receiver al
 whether it authenticated and mapped the sender before it evaluated, and whether the refusal is
 about authority or about content.
 
-- Toward a sender the airlock authenticated and mapped before it evaluated, a refusal of
-  authority MUST be distinguishable as permanent or as transient, and as nothing more. A refusal
-  is permanent when the airlock evaluated the envelope and would refuse it again if it were
-  presented unchanged. It is transient when the airlock could not evaluate, because an input it
-  needs (a key source, a status source) was unavailable.
+- Toward a sender the airlock authenticated as the identity it claims, by a credential bound to
+  that one identity and never one shared across senders, and mapped before it evaluated, a
+  refusal of authority MUST be distinguishable as permanent or as transient, and as nothing more.
+  A refusal is permanent when the airlock evaluated the envelope and would refuse it again if it
+  were presented unchanged. It is transient when the airlock could not evaluate, because an input
+  it needs (a key source, a status source) was unavailable. A transient refusal is recorded as a
+  `not_evaluated` drop (§3.5).
 - Toward every other sender, every delivered envelope SHOULD receive the same response, for
   example the transport's success status, so that the response itself carries no verdict.
 - A screen refusal MUST be indistinguishable from acceptance toward every sender.
 
-> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #174). Applies to the **permanent-or-transient classification toward an authenticated and mapped sender**; the uniform response toward every other sender, and a screen refusal that reads as acceptance, are implemented.
+A transport whose credential cannot be bound to one sender, such as a token that every sender
+on a channel holds, does not authenticate a sender in this sense, whatever else it verifies. Its
+senders are among "every other sender" above and are told nothing.
 
 What this prevents is the error oracle, and it has two attackers. A stranger probing the ingress
 learns the receiver's trust configuration from any answer that differs between refusals, and a
@@ -434,6 +440,11 @@ verdict on content. A legitimate mapped peer needs one thing to do its work, whe
 to stop, and that fact describes the receiver's own state and not the sender's chain. This is the
 rule verifier-side guidance states for an authenticated caller
 (`draft-jackson-wimse-evaluation` §5).
+
+The same oracle opens behind a credential every sender shares. There the identity is whatever
+the holder claims, so if a mapped identity drew a different answer from an unmapped one, any
+holder could learn which identities the trust map holds by claiming them one at a time. Binding
+the credential to one identity confines what a sender learns to the identity it is.
 
 Taint derivation at ingestion is **deterministic and never model-judged**: a source taints the
 receiving turn if *either* its chain label is `untrusted` *or* the receiver's own input trust map
@@ -502,8 +513,6 @@ have chosen. An implementation MUST provide a control under which, on a tainted 
 destination the agent composed is treated as an external write and routed through the escalation
 above. Which argument of an operation is its destination is declared in reviewed configuration, as
 the operation's other facts are. A deployment MAY leave the control off.
-
-> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #178).
 
 What this prevents is request forgery steered by injected content: the agent reads text an
 attacker planted, the text supplies an address, and a tool that holds network position the
@@ -692,6 +701,23 @@ The gate contract is the invariant that makes everything above enforceable:
   suspicion in a screen; it MUST NOT authorize, loosen, or decide. The model may tighten, never
   loosen: it is never the judge in the dangerous direction.
 
+**Who answers a held call.** A `require_approval` decision names the human whose answer releases
+the call: where a grant governs the call, the owner that grant names, as the companion GAL
+specification defines it; where none does, the human accountable for the target principal. The
+owner is fixed when the decision is made, and the record of the held call carries it, so the
+hold is routed to that owner and to no one else. An answer is applied only when it is
+authenticated as that owner, by a credential bound to that one identity in the sense of §6.1; an
+answer from any other party, an `owner`-class sender for the same principal included, is recorded
+and never applied.
+
+> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #189).
+
+What this prevents is a held call released by someone other than the party that owns the
+authority it would spend. A sender class says who addressed the agent: an `owner`-class sender is
+accountable for the principal, which is a different thing from owning every grant the principal
+acts under. Carrying the owner on the decision, rather than looking it up when an answer arrives,
+keeps a change of owner while the call waits from redirecting the answer.
+
 The safe-default polarity (whether an unresolvable case resolves to abstention or to a positive
 safe action) is deliberately NOT fixed by this specification: it is re-derived per deployment at
 a single, identifiable seam. Baking one polarity into the base is a latent safety bug for
@@ -846,9 +872,8 @@ human is actually reached. Two requirements follow.
 shorten as the queue grows. An approval that expires without a human decision MUST be recorded as
 expired, MUST be distinguishable on the audit record from a human denial, and MUST NOT count as a
 human decision in any evidence the grant lifecycle reads. Where a queue-depth alarm is raised, each
-approval that expires while it is raised MUST be reported to the approver, by count at least.
-
-> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #163).
+approval that expires while it is raised MUST be reported to the owner it was routed to (§6.8), by
+count at least.
 
 What this prevents is shedding by another trigger. A timer is outside the rule against shedding
 under load, because time fires it and load does not, and under a flood its effect is the same: the
@@ -867,8 +892,6 @@ asserted under another party's clock, a declared skew bound MUST be applied in t
 confers less authority: an expiry or an authority-lowering record is treated as effective up to
 the bound earlier, and an authority-raising record or a not-before time up to the bound later.
 
-> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #175).
-
 What this prevents is authority that outlasts its end by the width of the allowance. A symmetric
 leeway, which is what token libraries usually offer, honours an expired envelope for as long as
 the leeway runs, and an attacker who can hold a message back, or who benefits from a slow clock,
@@ -884,8 +907,6 @@ A decision is good no longer than its shortest-lived input. The decision point M
 earliest instant at which any input the decision depended on passes its maximum age, and a
 decision MUST NOT be relied on past that instant: a call held on it, or carried on from it, is
 evaluated again.
-
-> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #176).
 
 What this prevents is a decision made on something that was true when it was fetched and is false
 now: a verification key withdrawn after it was loaded, a manifest from which a tool has since been
@@ -1046,16 +1067,17 @@ One table; the **Role** column names the conformance role each clause binds ("Al
 | PTC-41 | Observer | Observer outputs are PII-safe (digests, codes, counts, opaque refs; never raw identity or content); the remediation vocabulary is closed, construction-validated, deterministically mapped from attribution basis, and contains no shed action. | WATCHDOG W4, W5, W6 |
 | PTC-42 | Receiver (gate) | Escalation is not treated as resolution: a deployment whose safe-default polarity is positive-safe-action operates a liveness contract over a declared expected output and deadline. The monitor is deterministic: it observes that the output did not occur, never why; no model sits on the path, and the sign of life is an enforcement-point-written audit or ledger artifact, never an agent self-report (wiring the liveness predicate to such an artifact: not yet implemented, #26). | friction-doctrine (availability) |
 | PTC-43 | Receiver (gate) | Approval-queue amplification is de-amplified, never shed: identical pending approvals SHOULD coalesce (a re-submission can coalesce onto a hold that has already expired: not yet implemented, #41); a depth threshold may alarm but the deployment still holds every intent; no default path denies, drops, or auto-resolves queued approvals under load. | friction-doctrine (availability) |
-| PTC-44 | Receiver | A refusal at the airlock discloses no gate, entry, path, signature or evaluated chain state beyond what the receiver publishes. Toward a sender the airlock authenticated and mapped before it evaluated, a refusal of authority is distinguishable as permanent or as transient and as nothing more (the classification: not yet implemented, #174); toward every other sender every delivered envelope SHOULD receive the same response; a screen refusal is indistinguishable from acceptance toward every sender. | TRUST-MAPPING; threat model |
+| PTC-44 | Receiver | A refusal at the airlock discloses no gate, entry, path, signature or evaluated chain state beyond what the receiver publishes. Toward a sender the airlock authenticated as the identity it claims, by a credential bound to that one identity and never shared across senders, and mapped before it evaluated, a refusal of authority is distinguishable as permanent or as transient and as nothing more; a transport whose credential cannot be bound to one sender authenticates no sender in this sense; toward every other sender every delivered envelope SHOULD receive the same response; a screen refusal is indistinguishable from acceptance toward every sender. | TRUST-MAPPING; threat model |
 | PTC-45 | Receiver | An envelope is addressed to one receiver: an `audience` other than the receiver's own zone id, compared exactly, is an `audience_mismatch` drop, checked before chain verification and before deduplication and whether or not verification is enabled; the drop names no signer. | SIGNING S9; SCHEMAS C9 |
 | PTC-46 | Receiver | A verification key is scoped in the receiver's own configuration to one zone id and a set of sender identities; a signature from a known key outside its scope is rejected as invalid; an unscoped or twice-enrolled key is refused at configuration load. | SIGNING S8 |
 | PTC-47 | All | The envelope has one wire form (ASCII JSON that parses back to an equal envelope) and a bounded size (196,608 bytes as sent, 262,144 as forwarded, at most 8 signatures); an envelope outside either is refused at schema validation, before any gate records it as seen. | SCHEMAS (wire form) |
 | PTC-48 | Receiver | A verification key carries a custody record in the receiver's own configuration: whether the signer holds the private key in agent-separated custody (stored and used only across a boundary the signer's agent cannot cross), and the evidence class of that record, from the closed vocabulary `declared` / `attested`. A key enrolled without a custody record, and a record of class `attested`, are refused at configuration load. A verified chain is at tier 3 (§7) only when every signature on it was made by a key recorded in agent-separated custody, and the receiver's evidence of that names the class; a verified chain signed by any other key is at tier 2. A `declared` record is never recorded, reported or described as verification of the peer. | SIGNING S10 |
-| PTC-49 | Receiver (gate) | Where the evaluation instant is compared with a time asserted under another party's clock, a declared skew bound is applied in the direction that confers less authority: an expiry or an authority-lowering record is effective up to the bound earlier, an authority-raising record or a not-before time up to the bound later (not yet implemented, #175). | §6.13; threat model |
-| PTC-50 | Receiver (gate) | For each fetched input a decision depended on, the decision point records the instant as of which it established that input, and no input is used past a maximum age the deployment declares for it; where a source states the time of its answer, the as-of instant is the earlier of that time and the time of the fetch; the decision point records the earliest instant at which any input a decision depended on passes its maximum age, and a call held on the decision or carried on from it is evaluated again past that instant (not yet implemented, #176). | §6.13; threat model |
+| PTC-49 | Receiver (gate) | Where the evaluation instant is compared with a time asserted under another party's clock, a declared skew bound is applied in the direction that confers less authority: an expiry or an authority-lowering record is effective up to the bound earlier, an authority-raising record or a not-before time up to the bound later. | §6.13; threat model |
+| PTC-50 | Receiver (gate) | For each fetched input a decision depended on, the decision point records the instant as of which it established that input, and no input is used past a maximum age the deployment declares for it; where a source states the time of its answer, the as-of instant is the earlier of that time and the time of the fetch; the decision point records the earliest instant at which any input a decision depended on passes its maximum age, and a call held on the decision or carried on from it is evaluated again past that instant. | §6.13; threat model |
 | PTC-51 | Receiver (gate) | Delegation does not launder: a context an agent causes to exist outside its zone, or to run later, begins with a turn at least as tainted as the turn that caused it (not yet implemented, #177). | TAINT; the subagent-identity doctrine |
-| PTC-52 | Receiver (gate) | An implementation provides a control under which, on a tainted turn, a call whose destination the agent composed is treated as an external write and escalated; the destination argument is declared in reviewed configuration; a deployment MAY leave the control off (not yet implemented, #178). | TAINT §5, §6; threat model |
-| PTC-53 | Receiver (gate) | A held approval MAY expire, and its expiry period does not shorten as the queue grows; an approval that expires without a human decision is recorded as expired, is distinguishable on the audit record from a human denial, and counts as no human decision in any evidence the grant lifecycle reads; while a queue-depth alarm is raised each such expiry is reported to the approver, by count at least (not yet implemented, #163). | friction-doctrine (availability) |
+| PTC-52 | Receiver (gate) | An implementation provides a control under which, on a tainted turn, a call whose destination the agent composed is treated as an external write and escalated; the destination argument is declared in reviewed configuration; a deployment MAY leave the control off. | TAINT §5, §6; threat model |
+| PTC-53 | Receiver (gate) | A held approval MAY expire, and its expiry period does not shorten as the queue grows; an approval that expires without a human decision is recorded as expired, is distinguishable on the audit record from a human denial, and counts as no human decision in any evidence the grant lifecycle reads; while a queue-depth alarm is raised each such expiry is reported to the owner it was routed to, by count at least. | friction-doctrine (availability) |
+| PTC-54 | Receiver (gate) | A `require_approval` decision names the human whose answer releases the held call: the owner of the grant that governs the call where one does, the human accountable for the target principal where none does; the owner is fixed when the decision is made and carried on the record of the held call; an answer is applied only when authenticated as that owner by a credential bound to that one identity, and an answer from any other party, an `owner`-class sender for the same principal included, is recorded and never applied (not yet implemented, #189). | GAL (owner-routed approval); §6.8 |
 
 ### 8.3 Origin-mapping coverage
 
@@ -1223,6 +1245,7 @@ minted at runtime**; carriage bindings, signature key substrates, transparency-l
 | 0.4.0-draft | 2026-10-03 | Redefines tier 3 of the provenance-maturity ladder (§7), which said "the receiver cannot be lied to" and was defined only by what the chain carries. A signature excludes whoever lacks the key, and where a signer's key is within reach of its own agent the agent can forge a chain that verifies, so a receiver verifying it can be lied to by the party the signature exists to exclude. New §7.1 and clause **PTC-48**: a receiver records, per verification key, whether the signer holds the key in agent-separated custody and the evidence class of that record (`declared` or `attested`); a verified chain reaches tier 3 only when every signing key is so recorded, a deployment's tier is the lowest among the chains it accepts, and the class travels with the tier. `declared` is a recorded assumption and verifies nothing; `attested` is reserved and refused at configuration load, and §1.3 names key-custody attestation at enrolment and remote attestation of the signer's deployment as the future extensions that would produce it. §6.6 and §6.7 point at the new section, PTC-22's marker is widened to cover deriving the tier from the custody records, and §9 gains item 10. A receiver's verification-key configuration gains a required record; no wire change. |
 | 0.5.0-draft | 2026-10-07 | Five clauses are added and one is rewritten, each stated with the attack it prevents and each marked NOT YET IMPLEMENTED. (1) §6.1 and **PTC-44** are rewritten. Earlier drafts made every airlock refusal silent and said this "departs deliberately" from the refusal signal that verifier-side guidance gives an authenticated caller. The two are reconciled by who is asking and what was refused: a sender the airlock authenticated and mapped learns whether a refusal of authority is permanent or transient and nothing more; every other sender gets a uniform response; a screen refusal reads as acceptance to everyone. A stranger gets no map of the trust configuration, and a compromised peer gets no feedback on content. (2) New §6.13 with **PTC-49** and **PTC-50**: clock skew is applied toward less authority, never symmetrically, and every fetched input a decision depended on has a recorded as-of instant and a declared maximum age. (3) **PTC-51** (§6.3): delegation does not launder. A context an agent causes to exist outside its zone, or to run later, starts at least as tainted as the turn that caused it. (4) **PTC-52** (§6.4): on a tainted turn a call whose destination the agent composed is escalated as an external write, as a control a deployment may leave off. §6.4 says what this does not stop, request forgery inside a tool server, and that containment closes it. (5) **PTC-53** (§6.12): an approval that expires undecided is recorded as expired, is told apart from a human denial, counts as no human decision, and is reported to the approver while a flood alarm is raised. Also: **PTC-43** says identical approvals SHOULD coalesce, as §6.12 always did, and is marked for a re-submission that can join an expired hold; **PTC-11** and **PTC-29** gain the markers their siblings already carried; and §9 item 6 no longer frames forced abstention as a consequence of injection only, since it needs no attacker. No wire change. |
 | 0.5.1-draft | 2026-10-07 | §6.13 and **PTC-50** gain the decision-level form of the input-age rule: a decision is good no longer than its shortest-lived input, the decision point records the earliest instant at which any input it depended on passes its maximum age, and a call held on the decision or carried on from it is evaluated again past that instant. Without it a record can show a permit whose every input was in date when read while the decision as a whole has outlived the window it was computed from. Raised in list review of the companion verifier draft. Marked NOT YET IMPLEMENTED with the rest of the clause. |
+| 0.6.0-draft | 2026-10-12 | (1) §3.5 gains the drop reason **`not_evaluated`**: a refusal the airlock could not evaluate because an input it fetches (the verification-key source, the deduplication store) was unavailable, recorded with a `detail` naming the input. §6.1 has defined a transient refusal since 0.5.0-draft, and this is its record; it lets the receiver's own log tell a refusal it evaluated from one it could not. (2) §6.1 and **PTC-44** say what "authenticated" means: a credential bound to the one identity the sender claims, never one shared across senders. Behind a shared credential the identity is whatever the holder claims, and an answer that differed by class would tell any holder which identities the trust map holds; a transport that cannot bind its credential to one sender authenticates no sender in this sense, and its senders are told nothing. (3) The reference implementation built PTC-44's classification ([ptc-gal-reference#174](https://github.com/wjatx/ptc-gal-reference/issues/174)) and bound its webhook credential to one sender ([#188](https://github.com/wjatx/ptc-gal-reference/issues/188)), so PTC-44's marker comes off. (4) New clause **PTC-54** (§6.8), with the `owner` row of §3.1 and the `require_approval` row of §3.3 amended to match: a `require_approval` decision names the owner of the grant that governs the call, the record of the held call carries that owner, and only that owner's authenticated answer is applied. Without it, any `owner`-class sender for a principal could release a call on authority another party owns. Marked NOT YET IMPLEMENTED ([#189](https://github.com/wjatx/ptc-gal-reference/issues/189)). §6.12 and PTC-53 name the routed owner where they said "the approver". Follows GAL `0.7.0-draft`, which states the lifecycle half. (5) The reference implementation built the skew bound (PTC-49, [#175](https://github.com/wjatx/ptc-gal-reference/issues/175)), input as-of instants and maximum age (PTC-50, [#176](https://github.com/wjatx/ptc-gal-reference/issues/176)), the composed-destination control (PTC-52, [#178](https://github.com/wjatx/ptc-gal-reference/issues/178)) and approval expiry as an event (PTC-53, [#163](https://github.com/wjatx/ptc-gal-reference/issues/163)), so their markers come off in §6.4, §6.12 and §6.13 and in §8.2. No wire change. |
 
 ## 12. References
 

@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| **Version** | `0.6.1-draft` |
+| **Version** | `0.7.0-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
-| **Date** | 2026-10-07 |
+| **Date** | 2026-10-12 |
 | **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
 | **Author** | Wes Jackson (Red Hat) |
 | **Copyright** | © 2026 Red Hat, Inc. |
@@ -230,6 +230,34 @@ every other coordinate matches. An enforcement point MUST be able to verify that
 under which a call is released is equivalent to the authority approved; whether that
 equivalence is carried with the approval or reconstructed from immutable records of the frozen
 call is an implementation choice.
+
+A held call is answered by the owner of the grant that governs it, and by no one else. The
+governing grant is the one at the call's `(principal, action class)` coordinate (§6.1), whatever
+rung it is at and whatever rule held the call. Its `ownerId` (§5.1) is fixed when the call is
+held and is part of the authority the call was evaluated under. An enforcement point MUST release
+or reject a held call only on an answer authenticated as that owner, by a credential bound to
+that one identity and never one shared across parties, and MUST record an answer from any other
+party without applying it, whoever else that party is authenticated as. The principal the call
+was frozen for is the scope a release runs in; the owner is the party whose answer it runs on.
+
+One mechanism therefore serves owners of different kinds. A developer who owns the grants on
+their own project answers the calls held under them. A deployment that makes a security team the
+owner of the grants for the action classes that reach a protected asset routes every call held
+under those grants to that team, whoever's session made the call. Where a grant's `ownerId`
+names a party other than the principal's `user`, the call and its release come from two
+credentials held by two named parties, the separation maker≠checker gives a promotion (§6.4.3),
+and the record shows both. Whether those parties are two people is, as there, an organizational
+fact the record evidences and the platform does not enforce. Where the owner is the principal's
+`user`, one person stages the call and answers it, and the record says so.
+
+What this prevents is self-approval of a fenced act. Without it, whoever can answer for the
+principal (the user whose session staged the call, or any party the deployment lets approve for
+that principal) can release a call that spends authority someone else owns, and a fence its owner
+placed holds only while the person it fences declines to open it. Fixing the owner when the call
+is held closes a second route to the same outcome: changing the grant's owner while the call
+waits, so that the answer comes from a party the owner at hold time never named.
+
+> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #189).
 
 Rejection here is the terminal disposition, the one that closes the approval. A non-terminal
 disposition, such as a deferral or a request for changes, is neither release nor rejection: the
@@ -804,8 +832,6 @@ asserted under another party's clock, a declared skew bound MUST be applied in t
 confers less authority: a term or an authority-lowering record is treated as effective up to the
 bound earlier, and an authority-raising record or a not-before time up to the bound later.
 
-> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #175).
-
 What this prevents is authority that outlasts its end by the width of the allowance. A symmetric
 leeway honours a lapsed term for as long as the leeway runs, and whoever benefits from a slow
 clock gets that window for nothing. Applied one way, the bound costs a grant at most its own width
@@ -919,15 +945,16 @@ rule of §4.3.
 standing are different questions. A verifier MUST establish, at the evaluation instant and from a
 source it pins, that the key which signed the record a grant's level rests on has not been
 withdrawn. Where standing is withdrawn or cannot be established within a declared maximum age, the
-grant is enforced at `lastSafeLevel`. This rule concerns withdrawal. A key retired on schedule is
-not withdrawn, and its rotation does not lower the grants it signed.
+grant is enforced at the lower of its level and `lastSafeLevel`. This rule concerns withdrawal. A
+key retired on schedule is not withdrawn, and its rotation does not lower the grants it signed.
 
 > **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #179).
 
 What this prevents is authority that outlives the authority that granted it. A promotion signed by
 an issuer key later found compromised keeps a valid signature, and with no standing check the
 grant stays at its level: whoever held the key for a day keeps every grant minted with it. The
-fall is to `lastSafeLevel` and not to nothing, for the reason a lapse lands there (§6.7.6).
+fall is to `lastSafeLevel`, or to the lower level the grant already holds, and not to nothing, for
+the reason a lapse lands there (§6.7.6).
 
 That fall is the enforcer's, inside the grant's own domain, where `lastSafeLevel` is known. A
 verifier in another domain, evaluating a chain that passes through the grant, holds no such level
@@ -1001,8 +1028,6 @@ as it stood and a later rewrite is a new finding.
 MUST equal the term on the latest `promotion` record before it at its coordinate, and a `lapse`
 record at a coordinate with no earlier promotion MUST carry none. An auditor MUST report a lapse
 record that breaks either rule, and the finding MUST be un-waivable.
-
-> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #183).
 
 What this prevents is a ledger that misstates how long a grant was certified. A reader takes the
 instant enforcement fell from this field (§5.2). The lapse writer copies the grant's term, and a
@@ -1130,8 +1155,6 @@ earliest instant at which any input the decision depended on passes its maximum 
 decision MUST NOT be relied on past that instant: a call held on it, or carried on from it, is
 evaluated again.
 
-> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #176).
-
 What this prevents is a decision made on something that was true when it was fetched and is false
 now: a grant demoted after it was read, an envelope tightened, a key withdrawn. With no maximum
 age the old input stays in force for as long as the process that read it keeps running, so
@@ -1201,9 +1224,10 @@ satisfiable by a third party holding read-only access.
 
   > **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #11).
 
-- **GAL-41** A verifier SHALL establish, at the evaluation instant and from a source it pins, that the key which signed the record a grant's level rests on has not been withdrawn; where standing is withdrawn or cannot be established within a declared maximum age, the grant SHALL be enforced at `lastSafeLevel`. A key retired on schedule is not withdrawn (not yet implemented, #179).
-- **GAL-42** Where the evaluation instant is compared with a time asserted under another party's clock, a declared skew bound SHALL be applied in the direction that confers less authority: a term or an authority-lowering record is effective up to the bound earlier, an authority-raising record or a not-before time up to the bound later (not yet implemented, #175).
-- **GAL-43** For each fetched input a decision depended on, the decision point SHALL record the instant as of which it established that input, and no input SHALL be used past a maximum age the deployment declares for it; where a source states the time of its answer, the as-of instant SHALL be the earlier of that time and the time of the fetch; the decision point SHALL record the earliest instant at which any input a decision depended on passes its maximum age, and a call held on the decision or carried on from it SHALL be evaluated again past that instant (not yet implemented, #176).
+- **GAL-41** A verifier SHALL establish, at the evaluation instant and from a source it pins, that the key which signed the record a grant's level rests on has not been withdrawn; where standing is withdrawn or cannot be established within a declared maximum age, the grant SHALL be enforced at the lower of its level and `lastSafeLevel`. A key retired on schedule is not withdrawn (not yet implemented, #179).
+- **GAL-42** Where the evaluation instant is compared with a time asserted under another party's clock, a declared skew bound SHALL be applied in the direction that confers less authority: a term or an authority-lowering record is effective up to the bound earlier, an authority-raising record or a not-before time up to the bound later.
+- **GAL-43** For each fetched input a decision depended on, the decision point SHALL record the instant as of which it established that input, and no input SHALL be used past a maximum age the deployment declares for it; where a source states the time of its answer, the as-of instant SHALL be the earlier of that time and the time of the fetch; the decision point SHALL record the earliest instant at which any input a decision depended on passes its maximum age, and a call held on the decision or carried on from it SHALL be evaluated again past that instant.
+- **GAL-45** A held call SHALL be released or rejected only on an answer authenticated as the `ownerId` of the grant that governs the call, by a credential bound to that one identity and never shared across parties, with the owner fixed when the call is held and bound into the authority the call was evaluated under; an answer from any party other than that owner SHALL be recorded and SHALL NOT be applied, whoever else that party is authenticated as (not yet implemented, #189).
 
 ### 7.4 Audit clauses
 
@@ -1213,7 +1237,7 @@ satisfiable by a third party holding read-only access.
 - **GAL-37** Ledger records SHALL be signed under the role their record type names (the issuer's key for `promotion`, `bootstrap`, `tightening` and `reattestation`, a separate evaluator key for `demotion` and `lapse`), and no identity SHALL hold both roles' signing keys. A verifier SHALL select the acceptable keys from the record type, SHALL refuse a record signed by the other role's key, and SHALL refuse a key resolvable under both. Every record after a coordinate's first SHALL start from the level the ledger held immediately before it, whichever role signed it; an auditor SHALL report one that does not, and the finding SHALL be un-waivable (for records signed under the issuer role: not yet implemented, #159).
 - **GAL-38** Where record signing is adopted over existing history, no record SHALL be excused from the signing requirement by its own timestamp or any other field it carries; unsigned history SHALL be dispositioned per record by acknowledgment (GAL-32) or re-minted. The adoption instant SHALL be explicit and judged against an explicit evaluation instant; one not yet in force SHALL be a finding and SHALL NOT narrow what is checked; and an undeclared adoption SHALL be reported on every audit.
 - **GAL-40** A ledger record's `ts` SHALL be the instant its writer appended it, later than every record already at its coordinate and never backdated, and the same value SHALL be written to the grant in the same write. An auditor SHALL report a grant whose `ts` differs from the `ts` of the latest ledger record at its coordinate.
-- **GAL-44** A `lapse` record's `certifiedUntil`, where present, SHALL equal the term on the latest `promotion` record before it at its coordinate, and a `lapse` record at a coordinate with no earlier promotion SHALL carry none; an auditor SHALL report a lapse record that breaks either rule, and the finding SHALL be un-waivable (not yet implemented, #183).
+- **GAL-44** A `lapse` record's `certifiedUntil`, where present, SHALL equal the term on the latest `promotion` record before it at its coordinate, and a `lapse` record at a coordinate with no earlier promotion SHALL carry none; an auditor SHALL report a lapse record that breaks either rule, and the finding SHALL be un-waivable.
 - **GAL-35** An auditor SHALL be able to reconcile the grant set against the live principal set in both directions (principals acting without a grant, and grants whose principal no longer exists) and SHALL report rather than write; retiring a grant remains a ceremony.
 
   > **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #14).
@@ -1266,6 +1290,7 @@ satisfiable by a third party holding read-only access.
 | GAL-42 | GAL §6.7.6 (0.6.0-draft). The asymmetric form is stated for a verifier in `draft-jackson-wimse-evaluation` §3.2; prior art for inputs that fail toward less authority is the lease (Gray and Cheriton, 1989). |
 | GAL-43 | GAL §6.15 (0.6.0-draft). Companion to PTC's clause of the same content. |
 | GAL-44 | GAL §6.11 (0.6.1-draft). Found by attacking the reference implementation's lapse field: the writer and the paired write held the term, and a record appended another way was checked by nothing. |
+| GAL-45 | GAL §4.1 (0.7.0-draft). Companion to PTC's clause on who answers a `require_approval` decision. Reads §5.1's `ownerId`, which every grant carried and the reference implementation's approval path did not consult. Normative ahead of the reference implementation (§3; tracking #189). |
 
 ### 7.6 Implementation Conformance Statement
 
@@ -1357,10 +1382,11 @@ consequence normatively expecting it to be contested.
 
 ### 8.3 Who ratifies the ratifier
 
-`ownerId` is the root of trust for ratification. At a single named owner this is clean; the
-N>1 fan (quorum ratification, key rotation mid-window, delegation) is unspecified in this
-version (§1.3). The honest bound (§6.4.3): the standard enforces two *credentials* and evidences two
-*humans*. Against a malicious sole operator it provides non-repudiation, not prevention.
+`ownerId` is the root of trust for ratification. It is also the only party whose answer releases
+a call held under the grant (§4.1, GAL-45). At a single named owner this is clean; the N>1 fan
+(quorum ratification, key rotation mid-window, delegation) is unspecified in this version (§1.3).
+The honest bound (§6.4.3): the standard enforces two *credentials* and evidences two *humans*.
+Against a malicious sole operator it provides non-repudiation, not prevention.
 
 ### 8.4 The enforcement point is load-bearing
 
@@ -1430,6 +1456,7 @@ nothing.
 | `0.5.1-draft` | 2026-10-07 | The `reattestation` record is built in the reference implementation ([ptc-gal-reference#164](https://github.com/wjatx/ptc-gal-reference/issues/164)), so its NOT YET IMPLEMENTED markers come off in §4.3, §5.2, §6.6, §6.10 and **GAL-15**. Building it found that GAL-15's last clause, "no other path SHALL rewrite a grant at an unchanged level", contradicted §4.3, which lets a `demotion` record's `toLevel` equal its `fromLevel`: a demotion that fires on a grant already at its floor rewrites the grant at an unchanged level and appends a `demotion` record. The clause and §6.6 now state the rule that was meant: no write to a grant goes unrecorded. Two requirements are added to the same clause. A `reattestation` record is always signed under the issuer role, and a re-attestation is refused when no issuer signing key is configured; the bootstrap override of §6.10 does not extend to it, because re-attestation returns a quarantined grant to acting authority and an unsigned record of that names nobody who can be held to it. §6.6 states what the two rules prevent. The markers for [#165](https://github.com/wjatx/ptc-gal-reference/issues/165) and [#166](https://github.com/wjatx/ptc-gal-reference/issues/166) are unchanged. |
 | `0.6.0-draft` | 2026-10-07 | Three clauses are added, each stated with what it prevents and each marked NOT YET IMPLEMENTED, and two earlier rulings are published. (1) **GAL-41** (§6.10), issuer standing: a verifier establishes that the key behind a grant's level has not been withdrawn, and a grant whose issuer's standing is withdrawn or unknown is enforced at `lastSafeLevel`. Validity when signed and standing when evaluated are different questions, and only the first was asked. Rotation is not withdrawal. (2) **GAL-42** (§6.7.6): clock skew is applied toward less authority and never symmetrically. (3) **GAL-43** (new §6.15): every fetched input a decision depended on has a recorded as-of instant and a declared maximum age. (4) **GAL-18** gains the qualifier §6.10 always carried, that the issuer refuses unsigned storage *where signing is configured*, and is marked for the two things the reference implementation does not yet do: refuse in every writer once a ledger has adopted signing, and leave a durable record of the override. A tightening is never refused for want of a key; where GAL-13 and GAL-18 meet, GAL-13 takes precedence. (5) §3 states that the lifecycle is proven by test and has no proven-in-use evidence in the sense of IEC 61508, so its thresholds and the false-positive rate of its triggers are uncalibrated. Follows PTC `0.5.0-draft`, which carries the companion clauses on skew and input age. |
 | `0.6.1-draft` | 2026-10-07 | (1) The reference implementation built the lapse record's `certifiedUntil` ([ptc-gal-reference#165](https://github.com/wjatx/ptc-gal-reference/issues/165)) and the audit rule that holds a grant's `ts` to its latest ledger record ([#166](https://github.com/wjatx/ptc-gal-reference/issues/166)), so their markers come off in §5.2, §6.7.6, §6.11 and **GAL-40**. §6.11 now says how an existing ledger is brought into line with that rule: by acknowledgment and by nothing else, with the acknowledgment bound to the grant's stored bytes. (2) New audit clause **GAL-44** (§6.11): a lapse record's `certifiedUntil` equals the term on the latest promotion before it, and the finding is un-waivable. Building the field found that only the writer held it true, so a planted lapse record could misstate how long a grant was certified. Marked NOT YET IMPLEMENTED ([#183](https://github.com/wjatx/ptc-gal-reference/issues/183)). (3) §6.15 and **GAL-43** gain the decision-level form of the input-age rule, with PTC `0.5.1-draft`: a decision is good no longer than its shortest-lived input, and a call held on it or carried on from it is evaluated again past that instant. |
+| `0.7.0-draft` | 2026-10-12 | (1) New clause **GAL-45** (§4.1, §7.3): a held call is answered by the `ownerId` of the grant that governs it and by no one else, on an answer authenticated as that owner by a credential bound to that one identity, with the owner fixed when the call is held. §5.1 has required a named owner on every grant, and §8.3 makes it the root of trust for ratifying a promotion, but nothing said who answers a call held under the grant, so a party able to approve for the principal could release a call that spends authority someone else owns. One mechanism serves a developer who owns the grants on their own project and a security team that owns the grants reaching a protected asset; where the owner is not the principal's `user`, the call and its release come from two named parties and the record shows both, with §6.4.3's bound on what that proves unchanged. Marked NOT YET IMPLEMENTED ([ptc-gal-reference#189](https://github.com/wjatx/ptc-gal-reference/issues/189)). §8.3 names the new responsibility. (2) The reference implementation built the skew bound (**GAL-42**, [#175](https://github.com/wjatx/ptc-gal-reference/issues/175)), input as-of instants and maximum age (**GAL-43**, [#176](https://github.com/wjatx/ptc-gal-reference/issues/176)) and the lapse-term audit rule (**GAL-44**, [#183](https://github.com/wjatx/ptc-gal-reference/issues/183)), so their markers come off in §6.7.6, §6.15, §6.11 and the three clauses in §7.3 and §7.4. (3) **GAL-41** and §6.10 now say "the lower of its level and `lastSafeLevel`" where they said "`lastSafeLevel`", matching GAL-24, GAL-34 and §6.7.6, because read literally a withdrawal could have raised a demoted grant. §10.2's count becomes 36 of 99. Follows PTC `0.6.0-draft`, which carries the companion clause PTC-54. No object or wire change. |
 
 ### 10.2 Reference implementation
 
@@ -1441,8 +1468,8 @@ L1–L8 lifecycle conformance suite seeds this specification's conformance tests
 implementation, clone these specifications into a `spec/` directory at its root, and run its
 test suite: the
 tests that compare specification text against the shipped schemas then execute rather than skip,
-and its continuous integration does exactly that on every commit. Across both specifications 42 of
-97 conformance clauses are marked normative ahead of the implementation and individually tracked
+and its continuous integration does exactly that on every commit. Across both specifications 36 of
+99 conformance clauses are marked normative ahead of the implementation and individually tracked
 (§3); none has been outgrown by the implementation. What a reader can check from a checkout, with
 no cloud account and no credential, is the whole of what is claimed here.
 

@@ -68,7 +68,23 @@ is reserved, and §1.3 names the attestation work that would produce it. GAL's c
 class: a promotion into an acting rung states its maturity and that maturity's evidence class, and
 the ratifier is shown both (GAL-20, marked NOT YET IMPLEMENTED).
 
-**PTC is now at `0.5.1-draft` and GAL at `0.6.1-draft` (2026-10-07).** Three changes since the
+**PTC is now at `0.6.0-draft` and GAL at `0.7.0-draft` (2026-10-12).** One new rule, two
+sharpenings and seven markers off. A held call is answered by the owner of the grant that governs
+it and by no one else: the owner is fixed when the call is held, the record of the held call
+carries it, and an answer from any other party, an `owner`-class sender for the same principal
+included, is recorded and never applied (GAL §4.1, GAL-45; PTC §6.8, PTC-54; both marked NOT YET
+IMPLEMENTED). Without it, whoever can answer for a principal could release a call that spends
+authority someone else owns. PTC §6.1 and PTC-44 now say what "authenticated" means: a credential
+bound to the one identity the sender claims, never one shared across senders, since behind a shared
+credential an answer that differed by class would tell any holder which identities the trust map
+holds. PTC §3.5 gains the `not_evaluated` drop reason, the record of a transient refusal. GAL-41 and
+§6.10 say "the lower of its level and `lastSafeLevel`" where they said `lastSafeLevel`, because read
+literally a withdrawal could have raised a demoted grant. The reference implementation built the
+refusal classification, the skew bound, input as-of instants and maximum age, the composed-destination
+control, approval expiry as an event and the lapse-term audit rule, so the markers come off PTC-44,
+PTC-49, PTC-50, PTC-52, PTC-53, GAL-42, GAL-43 and GAL-44. 36 of 99 clauses are marked.
+
+**PTC `0.5.1-draft` and GAL `0.6.1-draft` (2026-10-07).** Three changes since the
 revision below. A decision is good no longer than its shortest-lived input: the decision point
 records the earliest instant at which any input it depended on passes its maximum age, and a call
 held on the decision or carried on from it is evaluated again past that instant (PTC §6.13,
