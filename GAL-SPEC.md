@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| **Version** | `0.8.0-draft` |
+| **Version** | `0.9.0-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
-| **Date** | 2026-10-12 |
+| **Date** | 2026-10-28 |
 | **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
 | **Author** | Wes Jackson (Red Hat) |
 | **Copyright** | © 2026 Red Hat, Inc. |
@@ -281,8 +281,8 @@ specification (§9.1).
 
 ### 4.3 Ledger record types
 
-Seven record types share one append-only ceremony ledger (§5.2). Six record a level change. The
-seventh, `reattestation`, records a write that changes none.
+Eight record types share one append-only ceremony ledger (§5.2). Seven record a level change. The
+eighth, `reattestation`, records a write that changes none.
 
 | `recordType` | Records | Shape rules |
 |---|---|---|
@@ -292,17 +292,19 @@ seventh, `reattestation`, records a write that changes none.
 | `tightening` | Voluntary any-level → `in-loop` move (§6.3) | `toLevel` = `"in-loop"`; maker ≠ checker NOT enforced; `predicate` null; `triggeredBy` empty; `demotionReason` null |
 | `lapse` | A certification term expired (§6.7.6) | `toLevel` = the grant's `lastSafeLevel`; `ratifiedBy` is the system evaluator identity; `triggeredBy` empty: a lapse is an absence, not a fired condition; `demotionReason` = `"pending-evidence"`; `predicate` null; `toLevel` MUST NOT rank above `fromLevel` and MUST NOT be `out-of-loop` |
 | `withdrawal` | A grant lowered because the issuer key its level rested on was withdrawn (§6.10) | `ratifiedBy` is the system evaluator identity, and the record is signed by the evaluator's key where signing is configured; `triggeredBy` empty: no condition fired; `demotionReason` = `"pending-evidence"`; `predicate` null; `toLevel` = the lower of the grant's level and its `lastSafeLevel`, and MUST NOT rank above `fromLevel` and MUST NOT be `out-of-loop`; `certifiedUntil` null; the withdrawn key is not a field: a reader derives it from the ledger, as the verified signer of the record the grant's level rested on, and `evidence` names it for a person |
+| `principal-withdrawal` (not yet implemented, #197) | A grant lowered because its principal's standing was withdrawn (§6.16) | `ratifiedBy` is the system evaluator identity, and the record is signed by the evaluator's key where signing is configured; `triggeredBy` empty; `demotionReason` = `"pending-evidence"`; `predicate` null; `toLevel` = the lower of the grant's level and its `lastSafeLevel`, and MUST NOT rank above `fromLevel` and MUST NOT be `out-of-loop`; `certifiedUntil` null; `evidence` names the source's answer for a person, with the cause where the source gives one, and the cause does not change `toLevel` |
 | `reattestation` | A grant re-issued at its level under a changed envelope (§6.6) | `fromLevel` and `toLevel` both equal the grant's level; `ratifiedBy` is the identity that re-attested; maker ≠ checker NOT enforced; `predicate` null; `triggeredBy` empty; `demotionReason` null; `certifiedUntil` null |
 
-All seven record types are implemented.
+Seven of the eight record types are implemented; `principal-withdrawal` is not
+(not yet implemented, #197).
 
 A `reattestation` record neither earns a level nor lowers one. A reader that derives a
 coordinate's level from its ledger, or looks for the record that raised a grant to its current
 level, MUST pass over it: the level and the earning record are the ones the ledger held
 immediately before it.
 
-The schema enforces field shape and **one rule of direction**: a `demotion`, `lapse` or
-`withdrawal` record whose `toLevel` ranks above its `fromLevel`, or whose `toLevel` is `out-of-loop`, MUST be refused
+The schema enforces field shape and **one rule of direction**: a `demotion`, `lapse`,
+`withdrawal` or `principal-withdrawal` record whose `toLevel` ranks above its `fromLevel`, or whose `toLevel` is `out-of-loop`, MUST be refused
 at construction, by the writer and by every reader that parses one. These two record types are
 signed by the evaluator's key (§6.10), which runs with no human and no model, so a record of
 either type that raises a level is authority minted from the side that must only ever lower it.
@@ -402,14 +404,14 @@ Non-normative example:
 
 ### 5.2 PromotionRecord
 
-The append-only ceremony-ledger record of every write to a grant. Seven record types share one
+The append-only ceremony-ledger record of every write to a grant. Eight record types share one
 ledger (§4.3); demotions append a `demotion`-typed record on the *same* ledger: demotion is
 recorded, never approved. The grant is the balance and the ledger is its journal: no sanctioned
 path writes a grant without appending the record that accounts for the write.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `recordType` | `"promotion"` \| `"demotion"` \| `"bootstrap"` \| `"tightening"` \| `"lapse"` \| `"reattestation"` \| `"withdrawal"` | yes | The record type; default `"promotion"`. Shape rules per §4.3. |
+| `recordType` | `"promotion"` \| `"demotion"` \| `"bootstrap"` \| `"tightening"` \| `"lapse"` \| `"reattestation"` \| `"withdrawal"` \| `"principal-withdrawal"` | yes | The record type; default `"promotion"`. Shape rules per §4.3 (the `principal-withdrawal` value: not yet implemented, #197). |
 | `actionClass` | string | yes | The action class of the grant the record accounts for. |
 | `principal` | Principal | yes | For whom. |
 | `fromLevel` | level \| null | yes | `null` means the Recommend rung: the agent held no grant, and this record's write is the grant's creation (first promotion or bootstrap). |
@@ -417,11 +419,11 @@ path writes a grant without appending the record that accounts for the write.
 | `evidence` | string | yes | An implementation-defined reference, opaque to GAL, on the same terms as `Grant.evidence` (§5.1), but what it references varies by record type; see below. |
 | `predicate` | string \| null | promotion-typed only | The signed promotion predicate authored in advance (the licensing text/result). REQUIRED non-empty on `promotion` records; null otherwise. |
 | `proposedBy` | string | yes | Maker identity. |
-| `ratifiedBy` | string | yes | Checker identity. On `promotion` records MUST differ from `proposedBy` (§6.4.3). On `demotion`, `lapse` and `withdrawal` records, the system demotion-evaluator identity. |
+| `ratifiedBy` | string | yes | Checker identity. On `promotion` records MUST differ from `proposedBy` (§6.4.3). On `demotion`, `lapse`, `withdrawal` and `principal-withdrawal` records, the system demotion-evaluator identity. |
 | `attestation` | enum \| null | no | **How the two ceremony identities were established**, from a closed vocabulary whose one defined value is `"solo-local"`: ONE operator held both ceremony roles, through two credentials that the same holder could mint. Null, including its absence from any record written before the field existed, means the two identities were established by mutually unmintable credentials, the full maker≠checker guarantee of §6.4.3. The value MUST be **derived** by the issuer from the ceremony identities themselves, never independently asserted by the proposer, so the marker and the identities cannot disagree. This field is what keeps §6.10's non-repudiation claim honest: the record must never imply a review that did not happen, so a record written under the weaker guarantee states it rather than leaving an auditor to assume the stronger one. |
 | `envelopeHash` | string | yes | The envelope hash in force when the record was written; bound into the signed statement (§6.10). On a `reattestation` record, the hash the grant was re-issued under. |
 | `triggeredBy` | string[] | demotion-typed only | The DemotionTrigger values that fired. Non-empty on `demotion` records; empty otherwise. |
-| `demotionReason` | `"failing"` \| `"pending-evidence"` \| null | demotion-, lapse- and withdrawal-typed only | Set on `demotion` records; `"pending-evidence"` on `lapse` and `withdrawal` records (§4.3); null otherwise. |
+| `demotionReason` | `"failing"` \| `"pending-evidence"` \| null | demotion-, lapse-, withdrawal- and principal-withdrawal-typed only | Set on `demotion` records; `"pending-evidence"` on `lapse`, `withdrawal` and `principal-withdrawal` records (§4.3); null otherwise. |
 | `certifiedUntil` | string (ISO-8601 UTC) \| null | no | On a `promotion` record, the certification term the checker ratified; binding the term into the signed record is what makes it part of what the checker is accountable for (§6.10). On a `lapse` record, the term that expired, which is the instant enforcement fell (§6.7.6). MUST be null on every other type. Omitted from the canonical form when null (§3). |
 | `ts` | string (ISO-8601 UTC) | yes | The instant the writer appended this record, and nothing else; see below. |
 
@@ -438,6 +440,8 @@ a lapse cites the absence of renewal rather than any artifact (§6.7.6); a reade
 from the record's `certifiedUntil` field and never from this string. A `withdrawal` record's
 `evidence` names the withdrawn key for a person; a reader derives the key from the ledger, as the
 verified signer of the record the grant's level rested on, and never from this string.
+A `principal-withdrawal` record's `evidence` names the source's answer for a person, with the
+cause where the source gives one; the cause does not change `toLevel`.
 A `reattestation` record's
 `evidence` is a short free-text rationale, which an implementation MAY default. What is uniform, and
 what conformance depends on, is that the value is opaque to GAL and integrity-bound with the rest of the record (§6.9, §6.10): an
@@ -460,6 +464,7 @@ time.
 | `demotion` | when the evaluator wrote it | when any trigger condition arose |
 | `lapse` | when the evaluator wrote it, at or after the explicit evaluation instant | `certifiedUntil`, the instant enforcement fell |
 | `withdrawal` | when the evaluator wrote it, at or after the explicit evaluation instant | when the key was withdrawn, or when enforcement fell |
+| `principal-withdrawal` | when the evaluator wrote it, at or after the explicit evaluation instant | when the source answered that the principal's standing was withdrawn |
 | `reattestation` | when the re-attestation was written | when the envelope changed |
 
 A timestamp does not establish the time of another event that was not separately retained. A
@@ -585,8 +590,8 @@ The asymmetry is the load-bearing design property and MUST be preserved:
 
 The system can narrow its own envelope without a human in the moment; widening it requires a
 recorded ceremony. Any structurally invalid transition (level-skipping outside the sanctioned
-re-attestation case, a demotion target of `out-of-loop`, a `demotion`, `lapse` or `withdrawal`
-that raises the level, a fourth level value) MUST be unconstructible: a typed refusal, not a warning.
+re-attestation case, a demotion target of `out-of-loop`, a `demotion`, `lapse`, `withdrawal`
+or `principal-withdrawal` that raises the level, a fourth level value) MUST be unconstructible: a typed refusal, not a warning.
 
 ### 6.3 Tightening is always permitted
 
@@ -612,6 +617,8 @@ licensing path. The predicate MUST evaluate, in a fixed order, at least these ga
 6. **Minimum observation count met**: a thin sample cannot license a promotion.
 7. **Error rate below the configured threshold**: computed over the evidence window from
    durable counters (observed erroneous outcomes over observations).
+8. **Principal in standing**: the standing of the grant's principal is established at the
+   ceremony instant from the source §6.16 pins.
 
 Every ambiguous case (zero observations, sample too small, missing or stale artifact,
 unasserted coverage, malformed input) MUST resolve to *ineligible*. The predicate is
@@ -922,7 +929,7 @@ OPTIONAL transparency-log anchor for high-blast promotions is a knob shipping OF
 Records that raise or re-license authority (`promotion`, `bootstrap`, `tightening`, and
 `reattestation`) MUST be
 signed by the issuer's key. Records the automatic evaluator writes (`demotion`, `lapse`,
-`withdrawal`) MUST be signed by a separate evaluator key, and no identity may hold both. Satisfying "every record
+`withdrawal`, `principal-withdrawal`) MUST be signed by a separate evaluator key, and no identity may hold both. Satisfying "every record
 is signed" by giving the evaluator the issuer's key would let the side that runs with no human
 and no model mint a promotion, which is the boundary §6.7.2 exists to draw; the requirement to
 sign everything and the requirement to separate the identities are only jointly satisfiable
@@ -1179,6 +1186,49 @@ was in date when it was read, and the action still runs on a withdrawn key. This
 validating resolver and a certification path follow: a result lives no longer than the
 shortest-lived thing it was computed from.
 
+### 6.16 Principal standing
+
+> **Implementation status:** NORMATIVE, NOT YET IMPLEMENTED in the reference implementation (tracking: #196).
+
+Whether a principal held the authority when its grant was issued and whether it still holds it
+when the grant is used are different questions. A verifier MUST establish, at the evaluation
+instant and from a source it pins, the standing of the principal of the grant that governs a
+call: the whole identity tuple of §5.1, never the agent identity alone. Standing carried only in
+the request MUST NOT be accepted as its own source.
+
+Where the source says the principal's standing is withdrawn, the grant is treated as no grant
+on every call, with an audit-visible signal distinguishable from not-found, as a quarantined
+grant is (§6.9). The cause the source gives (a departure, a lost role) does not change this.
+Where standing cannot be established within a declared maximum age (§6.15), the grant is
+enforced at the lower of its level and `lastSafeLevel`.
+
+What this prevents is authority that outlives the principal it was granted to. A user who
+leaves, or loses the role a grant was issued for, keeps every grant at its level, because
+nothing in the lifecycle observes the departure: reconciliation reports it (§6.11) and only a
+ceremony retires the grant. Until then the agent acts for someone who is gone.
+
+For a withdrawn principal the evaluator appends a `principal-withdrawal` record (§4.3), in
+the same write that lowers the stored grant to the lower of its level and `lastSafeLevel`.
+Its `evidence` names the source's answer, with the cause where the source gives one.
+Where standing merely cannot be established it writes
+nothing, for the reason §6.10 gives. What the record prevents is authority returning without a
+ceremony: a principal whose standing is restored resumes at most at `lastSafeLevel`, and
+recovery above it is the promotion ceremony (§6.4).
+
+A verifier in another domain holds no `lastSafeLevel` for the grant. Where it cannot establish
+the standing of the principal on a path, or the source says it is withdrawn, the path confers
+nothing.
+
+The source is a deployment choice: a directory query, or a feed of account events with a
+maximum age applied to its last verified delivery. So is a certification term no longer than
+the maximum age: the promotion ceremony establishes standing (§6.4.1), the term cannot be
+renewed any other way (§6.7.6), and a grant past its term is enforced as one whose standing
+cannot be established.
+
+Standing joins by identifier. A party that assigns an identifier in the tuple MUST NOT reassign
+it to a different subject; where one can, a check of a departed principal's standing returns the
+standing of whoever holds the identifier now.
+
 ## 7. Conformance
 
 ### 7.1 Roles
@@ -1198,7 +1248,7 @@ satisfiable by a third party holding read-only access.
 - **GAL-3** Level SHALL be orthogonal to the per-call decision verbs; no verb outcome may mutate a level and no level may be inferred from a verb.
 - **GAL-4** The ceremony (and the automatic demotion path) SHALL be the grant store's only mutation paths (exclusivity of those paths: not yet implemented, #27); the issuer MUST refuse any other write.
 - **GAL-5** The promotion licensing predicate SHALL be pure and deterministic with no model output in the path, and SHALL NEVER license a promotion on an input it cannot interpret. **Evidence** that is ambiguous (thin, absent, stale, or uncorroborated) SHALL resolve to ineligible. Input that is **structurally invalid** (a negative counter, a total exceeding its window, an unknown enumeration value) SHALL refuse loudly and SHALL NOT resolve to ineligible, because a broken evidence pipeline reported as ineligible is indistinguishable from an honest denial and directs the proposer to gather more evidence, which can never fix it. A loud refusal SHALL still produce a recorded outcome (a recorded outcome on the ratify path: not yet implemented, #32).
-- **GAL-6** The predicate SHALL evaluate at least the seven gate terms of §6.4.1 in a fixed order, with unset knobs constituting no gate.
+- **GAL-6** The predicate SHALL evaluate at least the eight gate terms of §6.4.1 in a fixed order, with unset knobs constituting no gate (the eighth term: not yet implemented, #198).
 - **GAL-7** `proposedBy` and `ratifiedBy` on a promotion SHALL be credentials that **a single operator cannot satisfy both of**; the comparison SHALL reject any pair a lone operator can produce, and credential-identity equality is a floor rather than the whole test. Where an identity embeds unstable components (a hostname, a session id), the comparison SHALL additionally reject pairs sharing a ceremony role, since equality alone passes the same operator twice. The record SHALL evidence both non-repudiably. The standard enforces two credentials and evidences, not enforces, two humans.
 - **GAL-8** For high-blast classes, a true predicate SHALL carry an explicit per-instance human-ratification requirement that the ceremony MUST NOT drop; an unknown blast class SHALL be an error.
 - **GAL-9** High-blast SHALL derive from declared operation fields (write ∧ external ∧ ¬reversible, unknown reversibility read as not-reversible); deployments MAY tighten the derived class, MUST NOT loosen it.
@@ -1209,7 +1259,7 @@ satisfiable by a third party holding read-only access.
 - **GAL-14** Grant creation outside the ceremony SHALL emit a `bootstrap`-typed record; no grant SHALL lack a ledger counterpart (both, on the runtime bootstrap path: not yet implemented, #27).
 - **GAL-15** On envelope change, the grant SHALL be re-attested at its prior level under human ratification, and the re-attestation SHALL refuse on configuration mismatch, failing toward writing nothing. A re-attestation SHALL append exactly one `reattestation`-typed record, signed under the issuer role and carrying the same `ts` as the grant write, and SHALL change nothing on the grant but `envelopeHash`, `promotedBy` and `ts`; a re-attestation SHALL be refused when no issuer signing key is configured; no path SHALL rewrite a grant without appending the record that accounts for the write.
 - **GAL-16** Every level change SHALL append exactly one typed record on one append-only ledger; records SHALL never be overwritten, mutated, or removed.
-- **GAL-17** Structurally invalid transitions SHALL be unconstructible (typed refusal), including any demotion target of `out-of-loop`. A `demotion`, `lapse` or `withdrawal` record whose `toLevel` ranks above its `fromLevel`, and a `promotion` record whose `toLevel` is not exactly one rung above its `fromLevel`, SHALL be refused wherever a record is constructed or parsed, not only on the write path (the `promotion` half: not yet implemented, #159).
+- **GAL-17** Structurally invalid transitions SHALL be unconstructible (typed refusal), including any demotion target of `out-of-loop`. A `demotion`, `lapse`, `withdrawal` or `principal-withdrawal` record whose `toLevel` ranks above its `fromLevel`, and a `promotion` record whose `toLevel` is not exactly one rung above its `fromLevel`, SHALL be refused wherever a record is constructed or parsed, not only on the write path (the `promotion` half: not yet implemented, #159).
 - **GAL-18** Ledger records SHALL be signed per §6.10 (workload-identity key, envelope hash bound); where signing is configured the issuer SHALL refuse unsigned or half-configured storage absent an explicit, recorded override (refusal by every writer once a ledger has adopted signing, and a durable record of the override: not yet implemented, #162); a tightening SHALL NOT be refused for want of a key.
 - **GAL-19** Grant and ledger writes SHALL be conditional, and **no failure SHALL leave a raised grant without its ledger record**. Writing the record before the grant mutation satisfies this by ordering; committing both as one atomic transaction satisfies it by admitting no interruption. An implementation SHALL state which it provides.
 - **GAL-20** Promotions to `on-loop` or `out-of-loop` SHALL require `signed-lineage` provenance maturity as a deterministic predicate term; `in-loop` as a target SHALL carry no provenance ceiling. The predicate text on a `promotion` record whose target is an acting rung SHALL state the maturity it was licensed at and that maturity's evidence class as PTC defines it, and the ratifier SHALL be shown both (stating and showing the evidence class: not yet implemented, #21).
@@ -1239,13 +1289,14 @@ satisfiable by a third party holding read-only access.
 - **GAL-42** Where the evaluation instant is compared with a time asserted under another party's clock, a declared skew bound SHALL be applied in the direction that confers less authority: a term or an authority-lowering record is effective up to the bound earlier, an authority-raising record or a not-before time up to the bound later.
 - **GAL-43** For each fetched input a decision depended on, the decision point SHALL record the instant as of which it established that input, and no input SHALL be used past a maximum age the deployment declares for it; where a source states the time of its answer, the as-of instant SHALL be the earlier of that time and the time of the fetch; the decision point SHALL record the earliest instant at which any input a decision depended on passes its maximum age, and a call held on the decision or carried on from it SHALL be evaluated again past that instant.
 - **GAL-45** A held call SHALL be released or rejected only on an answer authenticated as the `ownerId` of the grant that governs the call, by a credential bound to that one identity and never shared across parties, with the owner fixed when the call is held and bound into the authority the call was evaluated under; an answer from any party other than that owner SHALL be recorded and SHALL NOT be applied, whoever else that party is authenticated as (not yet implemented, #189).
+- **GAL-46** A verifier SHALL establish, at the evaluation instant and from a source it pins, the standing of the principal (the whole identity tuple) of the grant that governs a call, and SHALL NOT accept standing carried only in the request as its own source; where standing is withdrawn the grant SHALL be treated as no grant, whatever the cause, and the evaluator SHALL append a `principal-withdrawal` record lowering the stored grant to the lower of its level and `lastSafeLevel`; and where standing cannot be established within a declared maximum age the grant SHALL be enforced at the lower of its level and `lastSafeLevel` and no record SHALL be written. A grant whose certification term is no longer than that maximum age satisfies this clause through the promotion ceremony (§6.4.1). (not yet implemented, #196)
 
 ### 7.4 Audit clauses
 
 - **GAL-31** An independent, read-only party SHALL be able to re-verify the full ledger: signatures, transition validity, envelope binding, the no-orphan invariant, and that no record has been removed and the ledger has not been rolled back (removal and rollback detection: not yet implemented, #157).
 - **GAL-32** Audit findings SHALL be dispositioned only by signed, append-only acknowledgment artifacts binding rule + coordinate + violation digest; the waivable vocabulary SHALL be closed, integrity-tamper findings SHALL be un-waivable, and an unverifiable waiver SHALL NOT be applied. A finding about a stored record SHALL bind that record's stored bytes in its detail, and a finding that cannot be so bound SHALL be un-waivable. An acknowledgment SHALL carry an expiry and SHALL NOT be applied past it (the expiry: not yet implemented, #158).
 - **GAL-33** Each armed demotion trigger SHALL have been drilled against a live grant before being relied upon, and a promotion SHALL NOT be considered complete until the promoted grant has acted once. **The first act under a promoted grant SHALL be recoverable from the audit record** (the join from audit record to promotion: not yet implemented, #31) by a read-only party: the enforcement point writes it, and the ceremony ledger cannot, since the enforcing component is barred from writing the grant store.
-- **GAL-37** Ledger records SHALL be signed under the role their record type names (the issuer's key for `promotion`, `bootstrap`, `tightening` and `reattestation`, a separate evaluator key for `demotion`, `lapse` and `withdrawal`), and no identity SHALL hold both roles' signing keys. A verifier SHALL select the acceptable keys from the record type, SHALL refuse a record signed by the other role's key, and SHALL refuse a key resolvable under both. Every record after a coordinate's first SHALL start from the level the ledger held immediately before it, whichever role signed it; an auditor SHALL report one that does not, and the finding SHALL be un-waivable (for records signed under the issuer role: not yet implemented, #159).
+- **GAL-37** Ledger records SHALL be signed under the role their record type names (the issuer's key for `promotion`, `bootstrap`, `tightening` and `reattestation`, a separate evaluator key for `demotion`, `lapse`, `withdrawal` and `principal-withdrawal`), and no identity SHALL hold both roles' signing keys. A verifier SHALL select the acceptable keys from the record type, SHALL refuse a record signed by the other role's key, and SHALL refuse a key resolvable under both. Every record after a coordinate's first SHALL start from the level the ledger held immediately before it, whichever role signed it; an auditor SHALL report one that does not, and the finding SHALL be un-waivable (for records signed under the issuer role: not yet implemented, #159).
 - **GAL-38** Where record signing is adopted over existing history, no record SHALL be excused from the signing requirement by its own timestamp or any other field it carries; unsigned history SHALL be dispositioned per record by acknowledgment (GAL-32) or re-minted. The adoption instant SHALL be explicit and judged against an explicit evaluation instant; one not yet in force SHALL be a finding and SHALL NOT narrow what is checked; and an undeclared adoption SHALL be reported on every audit.
 - **GAL-40** A ledger record's `ts` SHALL be the instant its writer appended it, later than every record already at its coordinate and never backdated, and the same value SHALL be written to the grant in the same write. An auditor SHALL report a grant whose `ts` differs from the `ts` of the latest ledger record at its coordinate.
 - **GAL-44** A `lapse` record's `certifiedUntil`, where present, SHALL equal the term on the latest `promotion` record before it at its coordinate, and a `lapse` record at a coordinate with no earlier promotion SHALL carry none; an auditor SHALL report a lapse record that breaks either rule, and the finding SHALL be un-waivable.
@@ -1262,7 +1313,7 @@ satisfiable by a third party holding read-only access.
 | GAL-3 | SCHEMAS §1 `level` note; GAL.md §4 |
 | GAL-4 | GAL.md §5 (ceremonies as the only sanctioned mutation path); grant-lifecycle §"write-protection seam" |
 | GAL-5 | GAL.md §5; deterministic-gate.md; predicate design (fail-safe) |
-| GAL-6 | predicate gate order (provenance / artifact / fresh / covered / budget / observations / rate) |
+| GAL-6 | predicate gate order (provenance / artifact / fresh / covered / budget / observations / rate / principal standing) |
 | GAL-7 | GAL.md §8 (#202: two credentials, evidences two humans) |
 | GAL-8 | grant-lifecycle §Promotion (high-blast always human); predicate `requires_human_ratification` |
 | GAL-9 | GAL.md §3 (actionClass derives; tighten-only high-blast); SCHEMAS §"BlastClass derivation" |
@@ -1302,6 +1353,7 @@ satisfiable by a third party holding read-only access.
 | GAL-43 | GAL §6.15 (0.6.0-draft). Companion to PTC's clause of the same content. |
 | GAL-44 | GAL §6.11 (0.6.1-draft). Found by attacking the reference implementation's lapse field: the writer and the paired write held the term, and a record appended another way was checked by nothing. |
 | GAL-45 | GAL §4.1 (0.7.0-draft). Companion to PTC's clause on who answers a `require_approval` decision. Reads §5.1's `ownerId`, which every grant carried and the reference implementation's approval path did not consult. Normative ahead of the reference implementation (§3; tracking #189). |
+| GAL-46 | GAL §6.16 (0.9.0-draft). The verifier-side statement is `draft-jackson-wimse-evaluation` §3.6; this is the lifecycle's half. Raised by Cliff Singletary on the WIMSE list, 2026-10-16, as the standing of the principal at the time a grant is used. Normative ahead of the reference implementation (§3; tracking #196). |
 
 ### 7.6 Implementation Conformance Statement
 
@@ -1469,6 +1521,7 @@ nothing.
 | `0.6.1-draft` | 2026-10-07 | (1) The reference implementation built the lapse record's `certifiedUntil` ([ptc-gal-reference#165](https://github.com/wjatx/ptc-gal-reference/issues/165)) and the audit rule that holds a grant's `ts` to its latest ledger record ([#166](https://github.com/wjatx/ptc-gal-reference/issues/166)), so their markers come off in §5.2, §6.7.6, §6.11 and **GAL-40**. §6.11 now says how an existing ledger is brought into line with that rule: by acknowledgment and by nothing else, with the acknowledgment bound to the grant's stored bytes. (2) New audit clause **GAL-44** (§6.11): a lapse record's `certifiedUntil` equals the term on the latest promotion before it, and the finding is un-waivable. Building the field found that only the writer held it true, so a planted lapse record could misstate how long a grant was certified. Marked NOT YET IMPLEMENTED ([#183](https://github.com/wjatx/ptc-gal-reference/issues/183)). (3) §6.15 and **GAL-43** gain the decision-level form of the input-age rule, with PTC `0.5.1-draft`: a decision is good no longer than its shortest-lived input, and a call held on it or carried on from it is evaluated again past that instant. |
 | `0.7.0-draft` | 2026-10-12 | (1) New clause **GAL-45** (§4.1, §7.3): a held call is answered by the `ownerId` of the grant that governs it and by no one else, on an answer authenticated as that owner by a credential bound to that one identity, with the owner fixed when the call is held. §5.1 has required a named owner on every grant, and §8.3 makes it the root of trust for ratifying a promotion, but nothing said who answers a call held under the grant, so a party able to approve for the principal could release a call that spends authority someone else owns. One mechanism serves a developer who owns the grants on their own project and a security team that owns the grants reaching a protected asset; where the owner is not the principal's `user`, the call and its release come from two named parties and the record shows both, with §6.4.3's bound on what that proves unchanged. Marked NOT YET IMPLEMENTED ([ptc-gal-reference#189](https://github.com/wjatx/ptc-gal-reference/issues/189)). §8.3 names the new responsibility. (2) The reference implementation built the skew bound (**GAL-42**, [#175](https://github.com/wjatx/ptc-gal-reference/issues/175)), input as-of instants and maximum age (**GAL-43**, [#176](https://github.com/wjatx/ptc-gal-reference/issues/176)) and the lapse-term audit rule (**GAL-44**, [#183](https://github.com/wjatx/ptc-gal-reference/issues/183)), so their markers come off in §6.7.6, §6.15, §6.11 and the three clauses in §7.3 and §7.4. (3) **GAL-41** and §6.10 now say "the lower of its level and `lastSafeLevel`" where they said "`lastSafeLevel`", matching GAL-24, GAL-34 and §6.7.6, because read literally a withdrawal could have raised a demoted grant. §10.2's count becomes 36 of 99. Follows PTC `0.6.0-draft`, which carries the companion clause PTC-54. No object or wire change. |
 | `0.8.0-draft` | 2026-10-12 | (1) `withdrawal` is the seventh record type (§4.3, §5.2, §6.10): the evaluator's record of a grant lowered because the issuer key its level rested on was withdrawn. It is written for a withdrawn key and never for standing that merely cannot be established, carries `demotionReason` `"pending-evidence"` and an empty `triggeredBy`, and names the key only in `evidence`, since a reader derives the key from the ledger. Without it the ledger disagrees with enforcement, which has already fallen, for as long as nobody looks. (2) The reference implementation built issuer standing ([ptc-gal-reference#179](https://github.com/wjatx/ptc-gal-reference/issues/179)), so **GAL-41**'s marker comes off in §6.10 and §7.3. (3) The five places that named `demotion` and `lapse` as the records the evaluator writes and that may never raise a level (§4.3, §6.2, §6.10, **GAL-17**, **GAL-37**) now name `withdrawal` with them. §10.2's count becomes 34 of 99. Follows PTC `0.6.1-draft`, which takes PTC-51's marker off. One object change: `PromotionRecord.recordType` gains the value `"withdrawal"`. No wire change. |
+| `0.9.0-draft` | 2026-10-28 | (1) New clause **GAL-46** (new §6.16), principal standing: a verifier establishes at the evaluation instant that the grant's principal still holds the authority it was granted. A withdrawn principal's grant is treated as no grant; one whose standing cannot be established is enforced at the lower of its level and `lastSafeLevel`. Whether a principal held authority when a grant was issued and whether it holds it now are different questions, and only reconciliation (§6.11) asked the second, as a report. (2) `principal-withdrawal` is the eighth record type (§4.3), so a principal whose standing returns resumes at most at `lastSafeLevel`. (3) §6.4.1 gains an eighth gate term, principal in standing, so a certification term no longer than the maximum age satisfies GAL-46 with no fetch at evaluation. GAL-6 and GAL-17 follow. Marked NOT YET IMPLEMENTED ([ptc-gal-reference#196](https://github.com/wjatx/ptc-gal-reference/issues/196), [#197](https://github.com/wjatx/ptc-gal-reference/issues/197), [#198](https://github.com/wjatx/ptc-gal-reference/issues/198)). §10.2's count becomes 36 of 100. One object change: `PromotionRecord.recordType` gains the value `"principal-withdrawal"`. No wire change. |
 
 ### 10.2 Reference implementation
 
@@ -1480,8 +1533,8 @@ L1–L8 lifecycle conformance suite seeds this specification's conformance tests
 implementation, clone these specifications into a `spec/` directory at its root, and run its
 test suite: the
 tests that compare specification text against the shipped schemas then execute rather than skip,
-and its continuous integration does exactly that on every commit. Across both specifications 34 of
-99 conformance clauses are marked normative ahead of the implementation and individually tracked
+and its continuous integration does exactly that on every commit. Across both specifications 36 of
+100 conformance clauses are marked normative ahead of the implementation and individually tracked
 (§3); none has been outgrown by the implementation. What a reader can check from a checkout, with
 no cloud account and no credential, is the whole of what is claimed here.
 
