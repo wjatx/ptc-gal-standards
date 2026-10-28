@@ -1,0 +1,20 @@
+# Secrets and credential files: never commit. This repo is public, and it holds
+# only specification text and diagram pages, so nothing here should ever match.
+# Filename patterns cannot judge content; gitleaks scans contents and is the
+# real guard. The set follows safe-agents' .gitignore, where the specs are
+# authored (2026-10-28).
+.env*
+*.key
+*.pem
+*.p12
+*.pfx
+.secrets*
+credentials.json
+secrets.yml
+secrets.yaml
+*_key.txt
+*_token.txt
+*_secret.txt
+
+# Editor and OS files
+.DS_Store
