@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | `0.9.1-draft` |
+| **Version** | `0.9.2-draft` |
 | **Status** | Draft for Linux Foundation agent-standards discussion. Wire schemas may change before 1.0; see Open Problems and Future Extensions. |
 | **Date** | 2026-10-28 |
 | **Working group** | LF Edge + Agentic AI Foundation (AAIF) |
@@ -1308,6 +1308,8 @@ satisfiable by a third party holding read-only access.
 
 ### 7.5 Clause origin mapping (non-normative)
 
+Origin entries of the form `wt#NNN` cite the maintainer's private working tracker. They are not issues in the reference implementation's public tracker, which is the one implementation-status markers cite (§3).
+
 | Clause | Origin |
 |---|---|
 | GAL-1 | grant-lifecycle §"The ladder"; GAL.md §4; SCHEMAS §1 |
@@ -1316,15 +1318,15 @@ satisfiable by a third party holding read-only access.
 | GAL-4 | GAL.md §5 (ceremonies as the only sanctioned mutation path); grant-lifecycle §"write-protection seam" |
 | GAL-5 | GAL.md §5; deterministic-gate.md; predicate design (fail-safe) |
 | GAL-6 | predicate gate order (provenance / artifact / fresh / covered / budget / observations / rate / principal standing) |
-| GAL-7 | GAL.md §8 (#202: two credentials, evidences two humans) |
+| GAL-7 | GAL.md §8 (wt#202: two credentials, evidences two humans) |
 | GAL-8 | grant-lifecycle §Promotion (high-blast always human); predicate `requires_human_ratification` |
 | GAL-9 | GAL.md §3 (actionClass derives; tighten-only high-blast); SCHEMAS §"BlastClass derivation" |
 | GAL-10 | grant-lifecycle §Promotion (evidence reviewer); deterministic-gate.md (surface-vs-decide) |
 | GAL-11 | grant-lifecycle §"input-integrity corollary" |
-| GAL-12 | GAL.md §9 (covered assertion recorded); multi-period window binding (#207/#212) |
+| GAL-12 | GAL.md §9 (covered assertion recorded); multi-period window binding (wt#207/wt#212) |
 | GAL-13 | GAL.md §4 (any-level → in-loop); SCHEMAS §7 `tightening` |
 | GAL-14 | GAL.md §5 (`seed` emits bootstrap record); SCHEMAS §7 `bootstrap`; L2 |
-| GAL-15 | GAL.md §5 (re-attestation carries prior level); grant-lifecycle §audit (#199 refusal seam). Reversed in 0.5.0-draft: re-attestation appends a record (§6.6), built in the reference implementation under #164. Amended in 0.5.1-draft: the rule is no write without a record, and the record is always issuer-signed. |
+| GAL-15 | GAL.md §5 (re-attestation carries prior level); grant-lifecycle §audit (wt#199 refusal seam). Reversed in 0.5.0-draft: re-attestation appends a record (§6.6), built in the reference implementation under #164. Amended in 0.5.1-draft: the rule is no write without a record, and the record is always issuer-signed. |
 | GAL-16 | SCHEMAS §7 (append-only ledger); L2 |
 | GAL-17 | L1 (transition unconstructibility); grant-lifecycle §ladder |
 | GAL-18 | GAL.md §8; tce-signing-shape.md; grant-lifecycle §audit (refuse-unsigned) |
@@ -1337,11 +1339,11 @@ satisfiable by a third party holding read-only access.
 | GAL-25 | grant-lifecycle §"Record why you demoted"; L4 |
 | GAL-26 | grant-lifecycle §Demotion (demotion-typed record; separate identity); SCHEMAS §7 |
 | GAL-27 | grant-lifecycle §triggers 4 (`false_action`, ease gradient, ships OFF) |
-| GAL-28 | L8 (budget-breach derivation parity); #192 refuse-on-unusable-input |
+| GAL-28 | L8 (budget-breach derivation parity); wt#192 refuse-on-unusable-input |
 | GAL-29 | grant-lifecycle §Hysteresis; L7 |
 | GAL-30 | GAL.md §3 (HMAC + loud quarantine); grant-lifecycle §audit (`GRANT_ENVELOPE_IN_FORCE`); L6 |
 | GAL-31 | GAL.md §11 (grant-integrity audit); grant-lifecycle §"audit instrument" |
-| GAL-32 | grant-lifecycle §"audit instrument" (#196 acknowledgment ceremony) |
+| GAL-32 | grant-lifecycle §"audit instrument" (wt#196 acknowledgment ceremony) |
 | GAL-33 | grant-lifecycle §"This must be drilled"; lessons doctrine ("a promotion is not done until the promoted grant acts once") |
 | GAL-34 | Five Eyes *Careful adoption of agentic AI services* (2026-05-01), the "expiry timers and recorded grant chains" pairing; `docs/references/five-eyes-agentic-guidance.md` FE-1. The evaluation-instant sentence answers an implementer finding against the IETF WIMSE cross-org delegation draft (finding 4, expired authority kept alive through quiet periods). |
 | GAL-35 | Five Eyes *Careful adoption of agentic AI services*, "periodically reconcile the registry against the live set of agents"; `docs/references/five-eyes-agentic-guidance.md` FE-2. Normative ahead of the reference implementation (§3; tracking #14). |
@@ -1523,8 +1525,9 @@ nothing.
 | `0.6.1-draft` | 2026-10-07 | (1) The reference implementation built the lapse record's `certifiedUntil` ([ptc-gal-reference#165](https://github.com/wjatx/ptc-gal-reference/issues/165)) and the audit rule that holds a grant's `ts` to its latest ledger record ([#166](https://github.com/wjatx/ptc-gal-reference/issues/166)), so their markers come off in §5.2, §6.7.6, §6.11 and **GAL-40**. §6.11 now says how an existing ledger is brought into line with that rule: by acknowledgment and by nothing else, with the acknowledgment bound to the grant's stored bytes. (2) New audit clause **GAL-44** (§6.11): a lapse record's `certifiedUntil` equals the term on the latest promotion before it, and the finding is un-waivable. Building the field found that only the writer held it true, so a planted lapse record could misstate how long a grant was certified. Marked NOT YET IMPLEMENTED ([#183](https://github.com/wjatx/ptc-gal-reference/issues/183)). (3) §6.15 and **GAL-43** gain the decision-level form of the input-age rule, with PTC `0.5.1-draft`: a decision is good no longer than its shortest-lived input, and a call held on it or carried on from it is evaluated again past that instant. |
 | `0.7.0-draft` | 2026-10-12 | (1) New clause **GAL-45** (§4.1, §7.3): a held call is answered by the `ownerId` of the grant that governs it and by no one else, on an answer authenticated as that owner by a credential bound to that one identity, with the owner fixed when the call is held. §5.1 has required a named owner on every grant, and §8.3 makes it the root of trust for ratifying a promotion, but nothing said who answers a call held under the grant, so a party able to approve for the principal could release a call that spends authority someone else owns. One mechanism serves a developer who owns the grants on their own project and a security team that owns the grants reaching a protected asset; where the owner is not the principal's `user`, the call and its release come from two named parties and the record shows both, with §6.4.3's bound on what that proves unchanged. Marked NOT YET IMPLEMENTED ([ptc-gal-reference#189](https://github.com/wjatx/ptc-gal-reference/issues/189)). §8.3 names the new responsibility. (2) The reference implementation built the skew bound (**GAL-42**, [#175](https://github.com/wjatx/ptc-gal-reference/issues/175)), input as-of instants and maximum age (**GAL-43**, [#176](https://github.com/wjatx/ptc-gal-reference/issues/176)) and the lapse-term audit rule (**GAL-44**, [#183](https://github.com/wjatx/ptc-gal-reference/issues/183)), so their markers come off in §6.7.6, §6.15, §6.11 and the three clauses in §7.3 and §7.4. (3) **GAL-41** and §6.10 now say "the lower of its level and `lastSafeLevel`" where they said "`lastSafeLevel`", matching GAL-24, GAL-34 and §6.7.6, because read literally a withdrawal could have raised a demoted grant. §10.2's count becomes 36 of 99. Follows PTC `0.6.0-draft`, which carries the companion clause PTC-54. No object or wire change. |
 | `0.8.0-draft` | 2026-10-12 | (1) `withdrawal` is the seventh record type (§4.3, §5.2, §6.10): the evaluator's record of a grant lowered because the issuer key its level rested on was withdrawn. It is written for a withdrawn key and never for standing that merely cannot be established, carries `demotionReason` `"pending-evidence"` and an empty `triggeredBy`, and names the key only in `evidence`, since a reader derives the key from the ledger. Without it the ledger disagrees with enforcement, which has already fallen, for as long as nobody looks. (2) The reference implementation built issuer standing ([ptc-gal-reference#179](https://github.com/wjatx/ptc-gal-reference/issues/179)), so **GAL-41**'s marker comes off in §6.10 and §7.3. (3) The five places that named `demotion` and `lapse` as the records the evaluator writes and that may never raise a level (§4.3, §6.2, §6.10, **GAL-17**, **GAL-37**) now name `withdrawal` with them. §10.2's count becomes 34 of 99. Follows PTC `0.6.1-draft`, which takes PTC-51's marker off. One object change: `PromotionRecord.recordType` gains the value `"withdrawal"`. No wire change. |
-| `0.9.0-draft` | 2026-10-28 | (1) New clause **GAL-46** (new §6.16), principal standing: a verifier establishes at the evaluation instant that the grant's principal still holds the authority it was granted. A withdrawn principal's grant is treated as no grant; one whose standing cannot be established is enforced at the lower of its level and `lastSafeLevel`. Whether a principal held authority when a grant was issued and whether it holds it now are different questions, and only reconciliation (§6.11) asked the second, as a report. (2) `principal-withdrawal` is the eighth record type (§4.3), so a principal whose standing returns resumes at most at `lastSafeLevel`. (3) §6.4.1 gains an eighth gate term, principal in standing, so a certification term no longer than the maximum age satisfies GAL-46 with no fetch at evaluation. GAL-6 and GAL-17 follow. Marked NOT YET IMPLEMENTED ([ptc-gal-reference#196](https://github.com/wjatx/ptc-gal-reference/issues/196), [#197](https://github.com/wjatx/ptc-gal-reference/issues/197), [#198](https://github.com/wjatx/ptc-gal-reference/issues/198)). §10.2's count becomes 36 of 100. One object change: `PromotionRecord.recordType` gains the value `"principal-withdrawal"`. No wire change. |
+| `0.9.0-draft` | 2026-10-28 | (1) New clause **GAL-46** (new §6.16), principal standing: a verifier establishes at the evaluation instant that the grant's principal still holds the authority it was granted. A withdrawn principal's grant is treated as no grant; one whose standing cannot be established is enforced at the lower of its level and `lastSafeLevel`. Whether a principal held authority when a grant was issued and whether it holds it now are different questions, and only reconciliation (§6.11) asked the second, as a report. (2) `principal-withdrawal` is the eighth record type (§4.3), so a principal whose standing returns resumes at most at `lastSafeLevel`. (3) §6.4.1 gains an eighth gate term, principal in standing, so a certification term no longer than the maximum age satisfies GAL-46 with no fetch at evaluation. GAL-6, GAL-17 and GAL-37 follow, as do §4.3's lead and implementation line, §5.2's field rows, `evidence` prose and timestamp table, §6.2's list of unconstructible transitions, and §6.10's list of evaluator-signed record types. Marked NOT YET IMPLEMENTED ([ptc-gal-reference#196](https://github.com/wjatx/ptc-gal-reference/issues/196), [#197](https://github.com/wjatx/ptc-gal-reference/issues/197), [#198](https://github.com/wjatx/ptc-gal-reference/issues/198)). §10.2's count becomes 36 of 100. One object change: `PromotionRecord.recordType` gains the value `"principal-withdrawal"`. No wire change. |
 | `0.9.1-draft` | 2026-10-28 | §5.2 gains the section-level implementation-status blockquote that 0.9.0's marker on the `principal-withdrawal` value of `recordType` requires (§3), naming the same tracking issue ([ptc-gal-reference#197](https://github.com/wjatx/ptc-gal-reference/issues/197)). No normative change and no wire change. |
+| `0.9.2-draft` | 2026-10-28 | Text corrections from [ptc-gal-standards#4](https://github.com/wjatx/ptc-gal-standards/issues/4). §7.5's origin entries that cite the maintainer's private working tracker are written `wt#NNN`, because three of them (#192, #196, #199) had come to name unrelated issues in the public tracker, and a lead sentence says so. The 0.9.0-draft row now lists every clause and section that release changed. No normative change and no wire change. |
 
 ### 10.2 Reference implementation
 
